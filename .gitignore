@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.js.map
+*.d.ts.map
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Debug
+*.log
+npm-debug.log*
+
+# Test artifacts
+coverage/
+
+# Pi agent
+.pi/plans/
+.pi/logs/
+.pi/artifacts/
+report/
