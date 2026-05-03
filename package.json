@@ -2,6 +2,7 @@
 	"name": "pi-sherlock",
 	"version": "0.1.0",
 	"description": "High-performance file search (ripgrep/fd/fzf), relevance ranking (BM25), AST-aware static analysis (semgrep/ast-grep), duplicate detection (jscpd), and code counting (tokei)",
+	"keywords": ["pi-package"],
 	"type": "module",
 	"main": "./src/plugin.ts",
 	"types": "./src/plugin.ts",

@@ -47,32 +47,60 @@ High-performance file search, structural code analysis, and code counting for [p
 "Find duplicate code blocks"        → jscpd
 ```
 
-## Requirements
-
-- **Bun** >= 1.3
-- **ripgrep** (`rg`) — `brew install ripgrep`
-- **semgrep** — `brew install semgrep` or `pip install semgrep`
-- **fzf** — `brew install fzf`
-- **fd** — `brew install fd`
-- **ast-grep** — `brew install ast-grep`
-- **tokei** — `brew install tokei`
-- **jscpd** — `npm i -g jscpd` or `brew install jscpd`
-
-All tools are optional — missing binaries show a warning on session start.
-
 ## Installation
 
 ```bash
-bun add pi-sherlock
+pi install git:github.com/dmoreq/pi-sherlock
 ```
+
+To update to the latest version:
+
+```bash
+pi update
+```
+
+To try without installing permanently:
+
+```bash
+pi -e git:github.com/dmoreq/pi-sherlock
+```
+
+## Requirements
+
+The following CLI tools are used by the extension. Missing tools show a warning on session start but do not block usage — only that tool's functionality is unavailable.
+
+| Tool | Required by | Install |
+|------|-------------|---------|
+| **ripgrep** (`rg`) | `search`, `ripgrep` | `brew install ripgrep` |
+| **semgrep** | `semgrep` | `brew install semgrep` or `pip install semgrep` |
+| **fzf** | `fzf` | `brew install fzf` |
+| **fd** | `fd` | `brew install fd` |
+| **ast-grep** | `ast_grep` | `brew install ast-grep` |
+| **tokei** | `tokei` | `brew install tokei` |
+| **jscpd** | `jscpd` | `npm i -g jscpd` or `brew install jscpd` |
+
+> **Note:** All external tools are optional. The extension loads and registers all tools on startup; tools whose binaries are missing will error at invocation with a clear message.
+
+## Usage
+
+After installation, restart pi. The extension registers 9 tools automatically:
+
+- **`search`** — your default content search with regex (ripgrep)
+- **`concept_search`** — relevance-ranked conceptual search (BM25)
+- **`semgrep`** — security audits and linting rules
+- **`ast_grep`** — structural search and refactoring with metavariables
+- **`fzf`** — fuzzy file path search
+- **`fd`** — file finding by name, extension, or type
+- **`ripgrep`** — advanced regex features (multiline, hidden files, count)
+- **`tokei`** — code line counter
+- **`jscpd`** — duplicate code detection
 
 ## Development
 
 ```bash
-# Install dependencies
+git clone git@github.com:dmoreq/pi-sherlock.git
+cd pi-sherlock
 bun install
-
-# Run tests
 bun test
 ```
 
