@@ -5,7 +5,7 @@
  * the 5x duplicated try/catch pattern in tool execute() functions.
  */
 import type { AgentToolResult } from "@mariozechner/pi-coding-agent";
-import { PiNativeError } from "./shared/errors";
+import { PiNativeError } from "../shared/errors.ts";
 
 // ── Result builder ──────────────────────────────────────────────────
 
