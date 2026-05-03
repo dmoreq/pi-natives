@@ -14,6 +14,7 @@ import { semgrepSchema } from "../schemas";
 import { semgrepScan, formatSemgrepResults, SemgrepError } from "../semgrep";
 import { renderSemgrepCall, renderSemgrepResult, type SemgrepScanParams, type SemgrepScanDetails } from "../semgrep-render";
 import { executeSafe } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerSemgrepTool(pi: ExtensionAPI, semgrepDescription: string) {
 	pi.registerTool({
@@ -70,7 +71,7 @@ export function registerSemgrepTool(pi: ExtensionAPI, semgrepDescription: string
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderSemgrepCall,

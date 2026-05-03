@@ -13,6 +13,7 @@ import { searchSchema } from "../schemas";
 import { grep, GrepError } from "../ripgrep";
 import { renderGrepCall, renderGrepResult, type GrepToolParams, type GrepToolDetails } from "../render";
 import { executeSafe, formatContentMatches } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerSearchTool(pi: ExtensionAPI, searchDescription: string) {
 	pi.registerTool({
@@ -70,7 +71,7 @@ export function registerSearchTool(pi: ExtensionAPI, searchDescription: string) 
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderGrepCall,

@@ -13,6 +13,7 @@ import { fzfSchema } from "../schemas";
 import { fzfSearch, FzfError } from "../fzf";
 import { renderFzfCall, renderFzfResult, type FzfSearchParams, type FzfSearchDetails } from "../fzf-render";
 import { executeSafe } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerFzfTool(pi: ExtensionAPI, fzfDescription: string) {
 	pi.registerTool({
@@ -65,7 +66,7 @@ export function registerFzfTool(pi: ExtensionAPI, fzfDescription: string) {
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderFzfCall,

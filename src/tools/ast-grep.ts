@@ -23,6 +23,7 @@ import {
 	type AstGrepSearchDetails,
 } from "../ast-grep-render";
 import { executeSafe } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerAstGrepTool(pi: ExtensionAPI, astGrepDescription: string) {
 	pi.registerTool({
@@ -76,7 +77,7 @@ export function registerAstGrepTool(pi: ExtensionAPI, astGrepDescription: string
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderAstGrepCall,

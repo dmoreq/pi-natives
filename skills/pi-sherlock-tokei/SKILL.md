@@ -45,3 +45,9 @@ tokei counts lines of code, comments, and blanks across 200+ languages. Think of
 2. Combine with `search` or `ast_grep` after identifying large files
 3. Use `exclude` to skip build artifacts (`node_modules`, `dist`, `target`)
 4. Use `sort: "code"` to find the meatiest languages
+
+## Output Size Validation
+
+All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
+before returning to the agent. A diagnostic note is appended when truncation occurs.
+This ensures token limits are respected regardless of result size.

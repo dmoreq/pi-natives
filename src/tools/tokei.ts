@@ -21,6 +21,7 @@ import {
 	type TokeiCountDetails,
 } from "../tokei-render";
 import { executeSafe } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerTokeiTool(pi: ExtensionAPI, tokeiDescription: string) {
 	pi.registerTool({
@@ -86,7 +87,7 @@ export function registerTokeiTool(pi: ExtensionAPI, tokeiDescription: string) {
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderTokeiCall,

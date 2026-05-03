@@ -40,3 +40,9 @@ This skill provides fuzzy file PATH searching (NOT content search) powered by [f
 2. Use `path` to narrow search to a subdirectory
 3. Combine `glob` with path filtering for targeted discovery
 4. Pair with `search`: fzf to find the file, search to grep its contents
+
+## Output Size Validation
+
+All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
+before returning to the agent. A diagnostic note is appended when truncation occurs.
+This ensures token limits are respected regardless of result size.

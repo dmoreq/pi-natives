@@ -41,3 +41,9 @@ This skill provides fast file and directory discovery powered by [fd](https://gi
 2. Use `extension` for fast type filtering, `glob` for complex patterns
 3. Pair with `search`: fd → find, search → grep contents
 4. Use `hidden` sparingly — `.gitignore` is usually correct
+
+## Output Size Validation
+
+All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
+before returning to the agent. A diagnostic note is appended when truncation occurs.
+This ensures token limits are respected regardless of result size.

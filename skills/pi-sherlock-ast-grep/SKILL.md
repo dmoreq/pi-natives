@@ -49,3 +49,9 @@ semgrep  → "Does this code have bugs or security issues?"
 2. Use `$$$ARGS` to capture function arguments, `$X` for single-node match
 3. Combine with `search` for follow-up text investigation
 4. Use `rewrite` carefully — it modifies matched code in-place
+
+## Output Size Validation
+
+All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
+before returning to the agent. A diagnostic note is appended when truncation occurs.
+This ensures token limits are respected regardless of result size.

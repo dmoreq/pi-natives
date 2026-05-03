@@ -62,3 +62,18 @@ Searches file content using BM25 relevance ranking. Returns matches ordered by s
 2. Use `concept_search` only for open-ended conceptual discovery
 3. NEVER shell out to `grep`/`rg`/`ag`/`ack` in Bash — use `search`
 4. Combine tools: `search` for precision, `concept_search` for exploration
+
+## Output Size Validation
+
+All pi-sherlock tools apply automatic output truncation to prevent excessive
+token consumption. The rule is:
+
+- **200 lines max** — outputs beyond this are truncated to the first 200 lines
+- **10,000 characters max** — outputs beyond this are truncated to 10K chars
+- Both limits are applied independently (whichever is hit first)
+- A diagnostic line is appended: `(truncated: showed N/M lines, X/Y chars)`
+- Truncation happens **before** the output reaches the LLM, so the agent always
+  sees manageable results
+
+This applies to all tools: `search`, `concept_search`, `fuzzy_find`, `find_files`,
+`semgrep`, `ripgrep`, `ast_grep`, `count_lines`, `find_duplicates`.

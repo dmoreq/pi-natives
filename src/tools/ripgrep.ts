@@ -20,6 +20,7 @@ import { ripgrepSchema } from "../schemas";
 import { grep, GrepError } from "../ripgrep";
 import { renderRipgrepCall, renderRipgrepResult, type RipgrepSearchParams, type RipgrepSearchDetails } from "../ripgrep-render";
 import { executeSafe, formatContentMatches } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerRipgrepTool(pi: ExtensionAPI, ripgrepDescription: string) {
 	pi.registerTool({
@@ -99,7 +100,7 @@ export function registerRipgrepTool(pi: ExtensionAPI, ripgrepDescription: string
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderRipgrepCall,

@@ -58,3 +58,9 @@ jscpd detects both exact and near-duplicate code blocks across 150+ languages. I
 3. Use `ignore` to exclude tests, generated code, and vendor dirs
 4. Default `minLines: 5` — lower it (e.g., 3) for smaller snippets
 5. After finding duplicates, use `ast_grep` + `search` to plan and execute refactoring
+
+## Output Size Validation
+
+All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
+before returning to the agent. A diagnostic note is appended when truncation occurs.
+This ensures token limits are respected regardless of result size.

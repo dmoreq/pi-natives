@@ -48,3 +48,9 @@ This skill provides AST-aware code search and static analysis powered by [Semgre
 2. Use `config: "auto"` for quick scans, `"p/r2c-security-audit"` for security
 3. Pair with `search` for deeper investigation of findings
 4. Start broad (INFO) and narrow as needed
+
+## Output Size Validation
+
+All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
+before returning to the agent. A diagnostic note is appended when truncation occurs.
+This ensures token limits are respected regardless of result size.

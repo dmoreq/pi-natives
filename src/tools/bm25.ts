@@ -14,6 +14,7 @@ import { bm25Schema } from "../schemas";
 import { Bm25Index } from "../bm25";
 import { renderBm25Call, renderBm25Result, type Bm25ToolParams, type Bm25ToolDetails } from "../render";
 import { executeSafe } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 import { extractSnippet } from "../shared/utils";
 import { collectFilesWithContent } from "../shared/fs";
 import { GrepError } from "../shared/errors";
@@ -95,7 +96,7 @@ export function registerBm25Tool(pi: ExtensionAPI) {
 					documentsSearched: allFiles.length,
 				};
 
-				return { text: formattedText, details };
+				return withOutputTruncation({ text: formattedText, details });
 			});
 		},
 		renderCall: renderBm25Call,

@@ -47,3 +47,9 @@ Can you express your need with `search`?
 3. Use `mode: "filesWithMatches"` to find which files contain a pattern
 4. Use `multiline: true` with patterns like `<open>.*?</close>` for cross-line matching
 5. Use `fixedStrings: true` when pattern contains special chars that should be literal
+
+## Output Size Validation
+
+All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
+before returning to the agent. A diagnostic note is appended when truncation occurs.
+This ensures token limits are respected regardless of result size.

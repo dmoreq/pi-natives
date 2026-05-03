@@ -13,6 +13,7 @@ import { fdSchema } from "../schemas";
 import { fdFind, FdError } from "../fd";
 import { renderFdCall, renderFdResult, type FdFindParams, type FdFindDetails } from "../fd-render";
 import { executeSafe } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerFdTool(pi: ExtensionAPI, fdDescription: string) {
 	pi.registerTool({
@@ -68,7 +69,7 @@ export function registerFdTool(pi: ExtensionAPI, fdDescription: string) {
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderFdCall,

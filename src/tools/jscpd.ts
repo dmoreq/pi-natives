@@ -22,6 +22,7 @@ import {
 	type JscpdDetectDetails,
 } from "../jscpd-render";
 import { executeSafe } from "./shared";
+import { withOutputTruncation } from "../shared/truncate";
 
 export function registerJscpdTool(pi: ExtensionAPI, jscpdDescription: string) {
 	pi.registerTool({
@@ -79,7 +80,7 @@ export function registerJscpdTool(pi: ExtensionAPI, jscpdDescription: string) {
 					result: resultText,
 				};
 
-				return { text: resultText, details };
+				return withOutputTruncation({ text: resultText, details });
 			});
 		},
 		renderCall: renderJscpdCall,
