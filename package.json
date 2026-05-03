@@ -3,10 +3,10 @@
 	"version": "0.1.0",
 	"description": "High-performance file search (ripgrep/fd/fzf), relevance ranking (BM25), AST-aware static analysis (semgrep/ast-grep), duplicate detection (jscpd), and code counting (tokei)",
 	"type": "module",
-	"main": "./src/index.ts",
-	"types": "./src/index.ts",
+	"main": "./src/plugin.ts",
+	"types": "./src/plugin.ts",
 	"exports": {
-		".": "./src/index.ts",
+		".": "./src/plugin.ts",
 		"./ripgrep": "./src/ripgrep.ts",
 		"./regex-engine": "./src/regex-engine.ts",
 		"./bm25": "./src/bm25.ts",
@@ -24,7 +24,7 @@
 		"README.md"
 	],
 	"pi": {
-		"extensions": ["./src/index.ts"],
+		"extensions": ["./src/plugin.ts"],
 		"skills": ["./skills/pi-sherlock", "./skills/pi-sherlock-semgrep", "./skills/pi-sherlock-fzf", "./skills/pi-sherlock-fd", "./skills/pi-sherlock-ripgrep", "./skills/pi-sherlock-ast-grep", "./skills/pi-sherlock-tokei", "./skills/pi-sherlock-jscpd"]
 	},
 	"scripts": {

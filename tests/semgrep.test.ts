@@ -29,7 +29,7 @@ function semgrepDescribe(name: string, fn: () => void) {
 const FIXTURE_EMPTY = JSON.stringify({
 	results: [],
 	errors: [],
-	paths: { scanned: ["src/index.ts"], skipped: [] },
+	paths: { scanned: ["src/plugin.ts"], skipped: [] },
 });
 
 const FIXTURE_WITH_MATCHES = JSON.stringify({
@@ -72,7 +72,7 @@ const FIXTURE_WITH_MATCHES = JSON.stringify({
 const FIXTURE_WITH_ERRORS = JSON.stringify({
 	results: [],
 	errors: [{ message: "File too large to parse: giant.ts", path: "giant.ts" }],
-	paths: { scanned: ["src/index.ts"], skipped: [] },
+	paths: { scanned: ["src/plugin.ts"], skipped: [] },
 });
 
 // ── Parser unit tests (no semgrep binary needed) ───────────────────

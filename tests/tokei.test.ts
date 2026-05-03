@@ -41,7 +41,7 @@ describe("formatTokeiResults", () => {
 	it("should format language stats in a table", () => {
 		const result = {
 			languages: {
-				TypeScript: { blanks: 10, code: 50, comments: 5, lines: 65, files: [{ name: "src/index.ts", blanks: 10, code: 50, comments: 5 }], inaccurate: false },
+				TypeScript: { blanks: 10, code: 50, comments: 5, lines: 65, files: [{ name: "src/plugin.ts", blanks: 10, code: 50, comments: 5 }], inaccurate: false },
 				Rust: { blanks: 3, code: 20, comments: 2, lines: 25, files: [{ name: "src/main.rs", blanks: 3, code: 20, comments: 2 }], inaccurate: false },
 				Total: { blanks: 13, code: 70, comments: 7, lines: 90, files: [], inaccurate: false },
 			},

@@ -30,7 +30,7 @@ export interface CollectOptions {
 /**
  * Recursively collect file paths (and optionally contents) from a directory.
  *
- * Replaces the duplicated `collectFiles()` in index.ts and `collectFilePaths()` in fzf.ts.
+ * Replaces the duplicated `collectFiles()` in plugin.ts and `collectFilePaths()` in fzf.ts.
  * - For path-only collection (fzf): `includeContent: false` → collects ALL files
  * - For content collection (BM25): `includeContent: true` → only text-like files
  */
