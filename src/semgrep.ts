@@ -143,10 +143,22 @@ export async function semgrepScan(options: SemgrepOptions): Promise<SemgrepResul
 			const stdout = Buffer.concat(stdoutChunks).toString("utf-8");
 			const stderr = Buffer.concat(stderrChunks).toString("utf-8");
 
+			// Check for common environment issues that result in non-0/1 exit codes
+			const isPermissionError = stderr.includes("PermissionError") || stderr.includes("Operation not permitted");
+			const isConfigError = stderr.includes("configuration") || stderr.includes("config");
+
 			if (code !== 0 && code !== 1) {
 				// Code 1 means matches found (semgrep convention). Code 0 = no matches.
 				// Any other code is an actual error.
-				const errMsg = stderr.trim() || `semgrep exited with code ${code}`;
+				let errMsg = stderr.trim() || `semgrep exited with code ${code}`;
+				
+				// Provide helpful context for common issues
+				if (isPermissionError) {
+					errMsg += "\n\nThis appears to be a permission issue with semgrep's log directory. Try running: mkdir -p ~/.semgrep && chmod 755 ~/.semgrep";
+				} else if (isConfigError) {
+					errMsg += "\n\nThis appears to be a semgrep configuration issue. Check your semgrep installation and config files.";
+				}
+				
 				reject(new SemgrepError(errMsg));
 				return;
 			}
@@ -154,11 +166,24 @@ export async function semgrepScan(options: SemgrepOptions): Promise<SemgrepResul
 			try {
 				resolve(parseSemgrepOutput(stdout));
 			} catch (err) {
-				reject(
-					new SemgrepError(
-						`Failed to parse semgrep output: ${err instanceof Error ? err.message : String(err)}`,
-					),
-				);
+				// Include stderr in parse errors for better debugging
+				const baseMsg = err instanceof Error ? err.message : String(err);
+				const stderrSuffix = stderr.trim() ? ` Stderr: ${stderr.trim()}` : "";
+				
+				// Special handling for empty output with permission errors
+				if (stdout.trim() === "" && isPermissionError) {
+					reject(new SemgrepError(
+						"Semgrep failed to run due to permission issues. " +
+						"This may be caused by semgrep not being able to write to its log directory. " +
+						`${stderrSuffix}`
+					));
+				} else {
+					reject(
+						new SemgrepError(
+							`Failed to parse semgrep output: ${baseMsg}${stderrSuffix}`,
+						),
+					);
+				}
 			}
 		});
 	});
@@ -197,7 +222,22 @@ interface RawSemgrepOutput {
 }
 
 function parseSemgrepOutput(stdout: string): SemgrepResult {
-	const raw: RawSemgrepOutput = JSON.parse(stdout);
+	// Check if stdout is empty or whitespace only
+	const trimmedOutput = stdout.trim();
+	if (!trimmedOutput) {
+		throw new Error("Semgrep output is empty - no JSON data to parse");
+	}
+
+	// Try to parse JSON with better error context
+	let raw: RawSemgrepOutput;
+	try {
+		raw = JSON.parse(trimmedOutput);
+	} catch (err) {
+		// Include first 200 chars of output in error message for debugging
+		const preview = trimmedOutput.slice(0, 200);
+		const isComplete = trimmedOutput.length <= 200;
+		throw new Error(`Failed to parse JSON output from semgrep. ${err instanceof Error ? err.message : String(err)}. Output${isComplete ? '' : ' (truncated)'}: "${preview}"`);
+	}
 
 	const matches: SemgrepMatch[] = (raw.results ?? [])
 		.filter(r => !r.extra?.is_ignored)

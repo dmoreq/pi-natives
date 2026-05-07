@@ -35,8 +35,8 @@
 		"@types/bun": "latest"
 	},
 	"peerDependencies": {
-		"@mariozechner/pi-coding-agent": "*",
-		"typebox": "*"
+		"@mariozechner/pi-coding-agent": "^0.73.1",
+		"typebox": "^1.1.38"
 	},
 	"engines": {
 		"bun": ">=1.3"
