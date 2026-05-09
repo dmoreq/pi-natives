@@ -8,7 +8,6 @@
 import { checkBinary } from "../shared/cli";
 import type { BinaryRequirement } from "./tool-descriptor";
 import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { AutoInstaller, createAutoInstallConfigs, type AutoInstallerOptions, type InstallationResult } from "./auto-installer";
 
 /**
  * Result of binary availability check
@@ -39,55 +38,18 @@ export interface BinaryNotificationOptions {
 }
 
 /**
- * Enhanced binary manager options with auto-installation
- */
-export interface EnhancedBinaryManagerOptions {
-	/** Notification options */
-	notifications: BinaryNotificationOptions;
-	
-	/** Auto-installer options */
-	autoInstaller?: AutoInstallerOptions;
-	
-	/** Whether to enable auto-installation */
-	enableAutoInstall: boolean;
-}
-
-/**
- * Manages binary dependencies for pi-sherlock tools with auto-installation
+ * Manages binary dependencies for pi-sherlock tools
  */
 export class BinaryManager {
 	private checkedBinaries = new Map<string, boolean>();
 	private checkOverrides = new Map<string, boolean>();
-	private autoInstaller?: AutoInstaller;
-	private installationResults = new Map<string, InstallationResult>();
+	private options: BinaryNotificationOptions;
 	
-	constructor(
-		options?: BinaryNotificationOptions | EnhancedBinaryManagerOptions
-	) {
-		// Handle backward compatibility - if old interface is passed, convert it
-		if (options && 'showNotifications' in options) {
-			// Old interface (BinaryNotificationOptions)
-			this.options = {
-				notifications: options,
-				enableAutoInstall: false
-			};
-		} else if (options) {
-			// New interface (EnhancedBinaryManagerOptions)
-			this.options = options as EnhancedBinaryManagerOptions;
-		} else {
-			// Default options
-			this.options = {
-				notifications: {
-					showNotifications: true,
-					notificationType: 'warning'
-				},
-				enableAutoInstall: false
-			};
-		}
-		
-		if (this.options.enableAutoInstall) {
-			this.autoInstaller = new AutoInstaller(this.options.autoInstaller);
-		}
+	constructor(options?: BinaryNotificationOptions) {
+		this.options = options || {
+			showNotifications: true,
+			notificationType: 'warning'
+		};
 	}
 	
 	/**
@@ -151,57 +113,22 @@ export class BinaryManager {
 	}
 	
 	/**
-	 * Send notifications for missing binaries and optionally trigger auto-installation
+	 * Send notifications for missing binaries
 	 */
 	async notifyMissing(
 		missing: BinaryRequirement[], 
 		context: ExtensionContext
 	): Promise<void> {
-		if (missing.length === 0) {
+		if (missing.length === 0 || !this.options.showNotifications) {
 			return;
 		}
 		
-		// Try auto-installation first if enabled
-		if (this.options.enableAutoInstall && this.autoInstaller) {
-			const configs = createAutoInstallConfigs();
-			const missingConfigs = configs.filter(config => 
-				missing.some(req => req.binary === config.requirement.binary)
+		for (const requirement of missing) {
+			const message = this.formatNotificationMessage(requirement);
+			context.ui.notify(
+				message,
+				this.options.notificationType
 			);
-			
-			if (missingConfigs.length > 0) {
-				const results = await this.autoInstaller.autoInstallMissing(missingConfigs, context);
-				
-				// Store results
-				for (const result of results) {
-					this.installationResults.set(result.binary, result);
-				}
-				
-				// Update cached binary status for successful installations
-				for (const result of results) {
-					if (result.success) {
-						this.checkedBinaries.set(result.binary, true);
-					}
-				}
-				
-				// Filter out successfully installed binaries from missing list
-				const stillMissing = missing.filter(req => {
-					const result = results.find(r => r.binary === req.binary);
-					return !result || !result.success;
-				});
-				
-				missing = stillMissing;
-			}
-		}
-		
-		// Send notifications for remaining missing binaries
-		if (this.options.notifications.showNotifications && missing.length > 0) {
-			for (const requirement of missing) {
-				const message = this.formatNotificationMessage(requirement);
-				context.ui.notify(
-					message,
-					this.options.notifications.notificationType
-				);
-			}
 		}
 	}
 	
@@ -209,19 +136,15 @@ export class BinaryManager {
 	 * Format notification message for missing binary
 	 */
 	private formatNotificationMessage(requirement: BinaryRequirement): string {
-		if (this.options.notifications.messageTemplate) {
-			return this.options.notifications.messageTemplate
+		if (this.options.messageTemplate) {
+			return this.options.messageTemplate
 				.replace('{binary}', requirement.binary)
 				.replace('{label}', requirement.label)
 				.replace('{install}', requirement.installCommand);
 		}
 		
 		const required = requirement.required ? 'required' : 'optional';
-		const installAction = this.options.enableAutoInstall 
-			? 'Auto-installation failed. Manual install:' 
-			: 'Install with:';
-		
-		return `pi-sherlock: ${requirement.label} (${required}) is not available. ${installAction} ${requirement.installCommand}`;
+		return `pi-sherlock: ${requirement.label} (${required}) is not available. Install with: ${requirement.installCommand}`;
 	}
 	
 	/**
@@ -246,54 +169,7 @@ export class BinaryManager {
 	}
 	
 	/**
-	 * Get installation result for a binary
-	 */
-	getInstallationResult(binary: string): InstallationResult | undefined {
-		return this.installationResults.get(binary);
-	}
-	
-	/**
-	 * Get all installation results
-	 */
-	getAllInstallationResults(): InstallationResult[] {
-		return Array.from(this.installationResults.values());
-	}
-	
-	/**
-	 * Trigger auto-installation for specific binaries
-	 */
-	async installBinaries(
-		binaries: string[],
-		context: ExtensionContext
-	): Promise<InstallationResult[]> {
-		if (!this.autoInstaller) {
-			throw new Error('Auto-installation is not enabled');
-		}
-		
-		const configs = createAutoInstallConfigs();
-		const targetConfigs = configs.filter(config => 
-			binaries.includes(config.requirement.binary)
-		);
-		
-		const results = await this.autoInstaller.autoInstallMissing(targetConfigs, context);
-		
-		// Store results
-		for (const result of results) {
-			this.installationResults.set(result.binary, result);
-		}
-		
-		// Update cached binary status for successful installations
-		for (const result of results) {
-			if (result.success) {
-				this.checkedBinaries.set(result.binary, true);
-			}
-		}
-		
-		return results;
-	}
-	
-	/**
-	 * Get statistics about binary availability and installations
+	 * Get statistics about binary availability
 	 */
 	getStats(requirements: BinaryRequirement[]): {
 		total: number;
@@ -301,37 +177,18 @@ export class BinaryManager {
 		missing: number;
 		required: number;
 		optional: number;
-		installations: {
-			attempted: number;
-			successful: number;
-			failed: number;
-			userDeclined: number;
-		};
 	} {
 		const results = this.checkRequirements(requirements);
 		const available = results.filter(r => r.available).length;
 		const required = requirements.filter(r => r.required).length;
 		const optional = requirements.length - required;
 		
-		const installStats = this.autoInstaller?.getStats() || {
-			totalAttempted: 0,
-			successful: 0,
-			failed: 0,
-			userDeclined: 0
-		};
-		
 		return {
 			total: requirements.length,
 			available,
 			missing: results.length - available,
 			required,
-			optional,
-			installations: {
-				attempted: installStats.totalAttempted,
-				successful: installStats.successful,
-				failed: installStats.failed,
-				userDeclined: installStats.userDeclined
-			}
+			optional
 		};
 	}
 }

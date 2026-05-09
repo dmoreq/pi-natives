@@ -66,8 +66,8 @@ describe("Extension Loading", () => {
 		piSherlockExtension(mockApi);
 
 		// Expected tools: search, ripgrep, concept_search, fuzzy_find, find_files,
-		// semgrep, ast_grep, tokei, jscpd, read_enhanced, write_enhanced, edit_enhanced, shell_enhanced, ls_enhanced, install_tools
-		expect(registerToolMock).toHaveBeenCalledTimes(15);
+		// semgrep, ast_grep, tokei, jscpd, read_enhanced, write_enhanced, edit_enhanced, shell_enhanced, ls_enhanced
+		expect(registerToolMock).toHaveBeenCalledTimes(14);
 	});
 });
 

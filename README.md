@@ -20,6 +20,7 @@ High-performance file search, structural code analysis, code counting, and **AI-
 - [Requirements](#requirements)
 - [Usage](#usage)
 - [Development & testing](#development--testing)
+- [Documentation](#documentation)
 - [License](#license)
 
 ## Installation
@@ -97,7 +98,7 @@ src/
 
 ## Tools
 
-The extension registers **15 tools**. Public names below are what the agent invokes in pi.
+The extension registers **14 tools**. Public names below are what the agent invokes in pi.
 
 ### Content search
 
@@ -138,11 +139,6 @@ The extension registers **15 tools**. Public names below are what the agent invo
 | `shell_enhanced` | JSON-first shell | Prefer **Nushell** pipelines that coerce to structured JSON tables; Bun shell and POSIX **bash** fallbacks when needed. |
 | `ls_enhanced` | Repository topology | **`broot` `:print_tree`** when `br`/`broot` is available; otherwise a deterministic native walker. Emits hierarchical maps + metadata (and optional git hints) tuned for agents. |
 
-### Utility & Setup
-
-| Tool | Engine | Description |
-|------|--------|-------------|
-| `install_tools` | Auto-installer | **Automatically install missing dependencies** with user consent. Supports platform-specific package managers (brew, apt, winget, npm, pip, cargo). |
 
 ## Enhanced core tools (AI-agent optimized)
 
@@ -254,14 +250,7 @@ Full behavior, troubleshooting, and merge semantics: **[docs/smart-routing.md](d
 
 ## Requirements
 
-CLI dependencies are **optional** and can be **auto-installed** with user consent. On **session_start**, pi-sherlock detects missing binaries and can automatically install required tools using your platform's package manager (Homebrew, APT, Winget, etc.). You can also use the `install_tools` command for manual installation.
-
-### Auto-Installation Features
-- ✅ **Smart Detection**: Automatically finds missing dependencies
-- ✅ **Platform Awareness**: Uses appropriate package managers (brew, apt, winget, npm, pip, cargo)
-- ✅ **User Consent**: Always asks permission before installing
-- ✅ **Selective Installation**: Installs required tools by default, optional tools on request
-- ✅ **Verification**: Confirms successful installation before proceeding
+CLI dependencies are **optional**. On **session_start**, pi-sherlock detects missing binaries and shows installation instructions for any missing tools.
 
 | Binary | Used by | Notes |
 |--------|---------|--------|
@@ -306,6 +295,15 @@ bun test
 - **AST editing**: Pattern matching and rewriting with syntax validation
 - **Schema validation**: TypeBox schema testing for all tool parameters
 - **Backward compatibility**: Facade testing ensures existing APIs continue working
+
+## Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+- **[Architecture Overview](./docs/OVERVIEW.md)** - System architecture and design principles
+- **[Documentation Index](./docs/README.md)** - Complete documentation navigation
+- **[Smart Routing](./docs/smart-routing.md)** - Intelligent tool selection system
+- **[Tool Selection Guide](./docs/tool-selection-guide.md)** - Choosing the right tool for each task
 
 ## License
 

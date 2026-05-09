@@ -24,7 +24,6 @@ import { registerSemgrepTool } from "./tools/semgrep";
 import { registerAstGrepTool } from "./tools/ast-grep";
 import { registerTokeiTool } from "./tools/tokei";
 import { registerJscpdTool } from "./tools/jscpd";
-import { registerInstallToolsTool } from "./tools/install-tools";
 
 // Get common binary requirements
 const binaries = createBinaryRequirements();
@@ -167,16 +166,7 @@ export const codeAnalysisTools: ToolDescriptor[] = [
 /**
  * Utility tool descriptors for maintenance and setup
  */
-export const utilityTools: ToolDescriptor[] = [
-	{
-		id: "install-tools",
-		category: ToolCategory.UTILITY,
-		registerFn: registerInstallToolsTool,
-		promptFile: "prompts/install-tools.md",
-		version: "1.0.0",
-		enabled: true
-	}
-];
+export const utilityTools: ToolDescriptor[] = [];
 
 /**
  * All tool descriptors organized by priority

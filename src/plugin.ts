@@ -61,7 +61,6 @@ import { registerWriteEnhancedTool } from "./tools/write-enhanced";
 import { registerEditEnhancedTool } from "./tools/edit-enhanced";
 import { registerShellEnhancedTool } from "./tools/shell-enhanced";
 import { registerLsEnhancedTool } from "./tools/ls-enhanced";
-import { registerInstallToolsTool } from "./tools/install-tools";
 
 // ── Load prompt descriptions at import time ─────────────────────────
 
@@ -79,7 +78,6 @@ const writeEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "pro
 const editEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "edit-enhanced.md"), "utf-8");
 const shellEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "shell-enhanced.md"), "utf-8");
 const lsEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "ls-enhanced.md"), "utf-8");
-const installToolsDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "install-tools.md"), "utf-8");
 
 const routingBinaryManager = new BinaryManager({ showNotifications: false });
 const routingToolRegistry = new ToolRegistry(routingBinaryManager);
@@ -91,24 +89,13 @@ const smartRouter = new SmartRouter(routingBinaryManager, FileTypeRegistry, rout
 // ── Extension entry point ──────────────────────────────────────────
 
 export default function piSherlockExtension(pi: ExtensionAPI) {
-	// Enhanced binary manager with auto-installation support
-	const enhancedBinaryManager = new BinaryManager({
-		notifications: {
-			showNotifications: true,
-			notificationType: 'warning'
-		},
-		enableAutoInstall: true,
-		autoInstaller: {
-			requireUserConsent: true,
-			installRequired: true,
-			installOptional: false,
-			maxRetries: 3,
-			installTimeout: 300000, // 5 minutes
-			verifyInstallation: true
-		}
+	// Binary manager for notifications only
+	const binaryManager = new BinaryManager({
+		showNotifications: true,
+		notificationType: 'warning'
 	});
 
-	// Check binary availability and auto-install on session start
+	// Check binary availability on session start
 	pi.on("session_start", async (_event, ctx) => {
 		smartRouter.route("routing readiness ping");
 		
@@ -134,35 +121,11 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 			}
 		];
 		
-		// Check for missing binaries and trigger auto-installation
-		const missing = enhancedBinaryManager.getMissingRequirements(binaryRequirements);
+		// Check for missing binaries and show notifications
+		const missing = binaryManager.getMissingRequirements(binaryRequirements);
 		
 		if (missing.length > 0) {
-			try {
-				await enhancedBinaryManager.notifyMissing(missing, ctx);
-				
-				// Get installation statistics
-				const stats = enhancedBinaryManager.getStats(binaryRequirements);
-				
-				if (stats.installations.successful > 0) {
-					ctx.ui.notify(
-						`pi-sherlock: Successfully auto-installed ${stats.installations.successful} tools!`,
-						"info"
-					);
-				}
-				
-				if (stats.installations.failed > 0) {
-					ctx.ui.notify(
-						`pi-sherlock: ${stats.installations.failed} tools failed to auto-install. See manual installation commands above.`,
-						"warning"
-					);
-				}
-			} catch (error) {
-				ctx.ui.notify(
-					`pi-sherlock: Auto-installation failed: ${error instanceof Error ? error.message : String(error)}`,
-					"error"
-				);
-			}
+			await binaryManager.notifyMissing(missing, ctx);
 		}
 
 		// Show routing readiness notification
@@ -187,5 +150,4 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 	registerEditEnhancedTool(pi, editEnhancedDescription);
 	registerShellEnhancedTool(pi, shellEnhancedDescription);
 	registerLsEnhancedTool(pi, lsEnhancedDescription);
-	registerInstallToolsTool(pi, installToolsDescription);
 }
