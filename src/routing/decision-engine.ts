@@ -14,7 +14,7 @@ import type {
 } from "./types";
 import { FileType, type FileClassification } from "../core/file-type-registry";
 
-const TOOL_FALLBACKS: Record<string, PiSherlockToolName[]> = {
+export const ROUTING_TOOL_FALLBACKS: Record<string, PiSherlockToolName[]> = {
 	search: ["ripgrep", "concept_search"],
 	concept_search: ["search"],
 	ripgrep: ["search"],
@@ -163,7 +163,7 @@ export class DecisionEngine {
 
 		// Respect missing binaries without overfitting local environments.
 		if (!satisfiesBinaries(context.binaryAvailability, primaryBinaryNeeds(primary))) {
-			const fb = TOOL_FALLBACKS[primary] ?? [];
+			const fb = ROUTING_TOOL_FALLBACKS[primary] ?? [];
 			for (const cand of fb) {
 				if (satisfiesBinaries(context.binaryAvailability, primaryBinaryNeeds(cand))) {
 					const prev = primary;
@@ -219,7 +219,7 @@ export class DecisionEngine {
 	}
 
 	private getFallbacks(tool: string): PiSherlockToolName[] {
-		return [...(TOOL_FALLBACKS[tool] ?? [])];
+		return [...(ROUTING_TOOL_FALLBACKS[tool] ?? [])];
 	}
 
 	private defaultRules(): RoutingRule[] {

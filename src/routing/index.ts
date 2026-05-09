@@ -15,7 +15,12 @@ export {
 	snapshotBinaryAvailability,
 	type FileTypeClassifier,
 } from "./context-analyzer";
-export { DecisionEngine } from "./decision-engine";
+export { DecisionEngine, ROUTING_TOOL_FALLBACKS } from "./decision-engine";
+export {
+	PI_SHERLOCK_ROUTING_TOOL_COUNT,
+	SmartRouter,
+	type SmartRouterOptions,
+} from "./router";
 export {
 	BUNDLED_TREE_CONFIG,
 	collectTreeTools,

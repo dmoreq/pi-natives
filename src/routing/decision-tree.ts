@@ -59,6 +59,8 @@ export interface TreeTraversalResult {
 	readonly pathLabels: readonly string[];
 	readonly baseConfidence: number;
 	readonly binariesSatisfied: boolean;
+	/** Leaf optional binary gates (matches tree config); used when merging routing decisions. */
+	readonly requiredBinaries?: readonly string[];
 }
 
 function asToolName(tool: string): PiSherlockToolName {
@@ -264,6 +266,7 @@ export class DecisionTree {
 				pathLabels: Object.freeze(pathLabels) as readonly string[],
 				baseConfidence: leaf.baseConfidence,
 				binariesSatisfied,
+				requiredBinaries: leaf.requiredBinaries ? [...leaf.requiredBinaries] : undefined,
 			};
 		}
 	}

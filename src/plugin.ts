@@ -41,6 +41,12 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { checkBinary } from "./shared/cli";
 import { resolveBrootBinary } from "./broot-topology";
 
+import { BinaryManager } from "./core/binary-manager";
+import { FileTypeRegistry } from "./core/file-type-registry";
+import { ToolRegistry } from "./core/tool-registry";
+import { allToolDescriptors } from "./tool-descriptors";
+import { PI_SHERLOCK_ROUTING_TOOL_COUNT, SmartRouter } from "./routing";
+
 import { registerSearchTool } from "./tools/search";
 import { registerBm25Tool } from "./tools/bm25";
 import { registerSemgrepTool } from "./tools/semgrep";
@@ -73,11 +79,19 @@ const editEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prom
 const shellEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "shell-enhanced.md"), "utf-8");
 const lsEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "ls-enhanced.md"), "utf-8");
 
+const routingBinaryManager = new BinaryManager({ showNotifications: false });
+const routingToolRegistry = new ToolRegistry(routingBinaryManager);
+routingToolRegistry.registerAll(allToolDescriptors);
+const smartRouter = new SmartRouter(routingBinaryManager, FileTypeRegistry, routingToolRegistry, {
+	supplementalRegisteredTools: ["search", "concept_search"],
+});
+
 // ── Extension entry point ──────────────────────────────────────────
 
 export default function piSherlockExtension(pi: ExtensionAPI) {
 	// Check binary availability on session start
 	pi.on("session_start", (_event, ctx) => {
+		smartRouter.route("routing readiness ping");
 		const bins: Array<[string, string, string]> = [
 			["rg", "ripgrep", "`brew install ripgrep`"],
 			["semgrep", "semgrep", "`brew install semgrep` or `pip install semgrep`"],
@@ -105,6 +119,11 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 				"warning",
 			);
 		}
+
+		ctx.ui.notify(
+			`pi-sherlock: Smart routing across ${PI_SHERLOCK_ROUTING_TOOL_COUNT} tools (rule engine + decision tree).`,
+			"info",
+		);
 	});
 
 	// Register all tools
