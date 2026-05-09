@@ -22,6 +22,7 @@ import {
 } from "../tokei-render";
 import { executeSafe } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerTokeiTool(pi: ExtensionAPI, tokeiDescription: string) {
 	pi.registerTool({
@@ -29,14 +30,7 @@ export function registerTokeiTool(pi: ExtensionAPI, tokeiDescription: string) {
 		label: "Count Lines (tokei)",
 		description: tokeiDescription,
 		promptSnippet: "count lines of code, comments, and blanks by language (tokei) — for codebase STATISTICS, not search",
-		promptGuidelines: [
-			"Use `count_lines` when you need codebase STATISTICS: line counts, language breakdowns, comment/code ratios.",
-			"Think of count_lines as 'cloc but faster' — it counts what's there, it doesn't search.",
-			"Use `files: true` to get per-file breakdowns.",
-			"Use `types` to filter by specific languages (e.g., ['Rust', 'TypeScript']).",
-			"Use `exclude` to skip directories (e.g., ['node_modules', 'dist']).",
-			"Do NOT use count_lines for: searching code (→ search), finding files (→ find_files/fuzzy_find), structural analysis (→ ast_grep/semgrep).",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("count_lines"),
 		parameters: tokeiSchema,
 		async execute(
 			_toolCallId: string,

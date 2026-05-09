@@ -15,6 +15,7 @@ import { semgrepScan, formatSemgrepResults, SemgrepError } from "../semgrep";
 import { renderSemgrepCall, renderSemgrepResult, type SemgrepScanParams, type SemgrepScanDetails } from "../semgrep-render";
 import { executeSafe } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerSemgrepTool(pi: ExtensionAPI, semgrepDescription: string) {
 	pi.registerTool({
@@ -22,12 +23,7 @@ export function registerSemgrepTool(pi: ExtensionAPI, semgrepDescription: string
 		label: "Semgrep",
 		description: semgrepDescription,
 		promptSnippet: "static analysis and pattern-based code search (semgrep engine) — for CODE STRUCTURE, not text",
-		promptGuidelines: [
-			"Use `semgrep` for code-smell detection, security auditing, and AST-aware structural search.",
-			"Prefer `semgrep` over regex `search` when matching CODE STRUCTURE (function calls, class definitions, control flow).",
-			"Combine with `search` (regex) for deeper investigation of findings.",
-			"Semgrep understands language syntax, so patterns like `$X == $X` correctly match self-comparisons.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("semgrep"),
 		parameters: semgrepSchema,
 		async execute(
 			_toolCallId: string,

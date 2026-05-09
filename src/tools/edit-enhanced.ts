@@ -13,6 +13,7 @@ import {
 	type EditEnhancedDetails,
 } from "../edit-render.ts";
 import { executeSafe } from "./shared";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export interface RegisterEditEnhancedToolOptions {
 	/** Inject editor instance (defaults to {@link AstFileEditor}). */
@@ -32,17 +33,7 @@ export function registerEditEnhancedTool(
 		description,
 		promptSnippet:
 			"AST-aware file editing — syntax-safe code modifications with preview and backup",
-		promptGuidelines: [
-			"Use `edit_enhanced` when refactoring code STRUCTURALLY — rename idioms captured by metavariable-safe patterns (`$X`, `$$$ARGS`) rather than brittle multiline regex.",
-			"The tool routes **code files** through ast-grep rewrite when `sg` / `ast-grep` exists; prose, JSON snippets, configs, etc. fall back to **literal substring** replace.",
-			"Always **`preview: true` first** for risky edits: it prints the ast-grep diff (or pseudo-diff) without mutating disk.",
-			"Prefer the builtin `edit`/`write` patch flow for trivial one-line typo fixes already expressed as exact snippets.",
-			"Pass **`nodeType`** when you want stricter/smarter matcher behavior; you still MUST supply concrete `pattern` / `replacement` strings.",
-			"Enable **`backup`** (default on) unless you explicitly want to skip snapshots; restores can use `AstFileEditor.restore` from the Bun writer helpers when needed.",
-			"When ast-grep is missing entirely, edits still work for native literals — but not for metavariable patterns.",
-			"If `syntax_ok` reads false, treat the rewritten file as suspect and repair before proceeding.",
-			"**`scope`**: omit or use `file` for whole-file rewrites only. Passing `function` / `class` is allowed for forward compatibility — it does **not** limit matches today; you will receive a **warnings** line explaining that scoped narrowing is reserved for a future release.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("edit_enhanced"),
 		parameters: editEnhancedSchema,
 		async execute(
 			_toolCallId: string,

@@ -21,6 +21,7 @@ import { grep, GrepError } from "../ripgrep";
 import { renderRipgrepCall, renderRipgrepResult, type RipgrepSearchParams, type RipgrepSearchDetails } from "../ripgrep-render";
 import { executeSafe, formatContentMatches } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerRipgrepTool(pi: ExtensionAPI, ripgrepDescription: string) {
 	pi.registerTool({
@@ -28,12 +29,7 @@ export function registerRipgrepTool(pi: ExtensionAPI, ripgrepDescription: string
 		label: "Ripgrep",
 		description: ripgrepDescription,
 		promptSnippet: "advanced file content search with ripgrep — only for features search doesn't have (multiline, count, hidden, no-ignore)",
-		promptGuidelines: [
-			"Use `ripgrep` (this tool) ONLY when you need advanced features: multiline, count mode, fixed strings, hidden files.",
-			"Use `search` for standard content searches with simpler parameters.",
-			"Use `semgrep` for AST-aware structural code analysis beyond regex.",
-			"Use `fd` for file FINDING by name/extension (not content search).",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("ripgrep"),
 		parameters: ripgrepSchema,
 		async execute(
 			_toolCallId: string,

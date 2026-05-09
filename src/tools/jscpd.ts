@@ -23,6 +23,7 @@ import {
 } from "../jscpd-render";
 import { executeSafe } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerJscpdTool(pi: ExtensionAPI, jscpdDescription: string) {
 	pi.registerTool({
@@ -30,14 +31,7 @@ export function registerJscpdTool(pi: ExtensionAPI, jscpdDescription: string) {
 		label: "Find Duplicates (jscpd)",
 		description: jscpdDescription,
 		promptSnippet: "detect duplicated/copy-pasted code blocks (jscpd) — find redundant code that should be refactored",
-		promptGuidelines: [
-			"Use `find_duplicates` when you need to find DUPLICATED or COPY-PASTED code blocks in a codebase.",
-			"find_duplicates detects exact clones (mode: 'strict') and near-duplicates (mode: 'mild' or 'weak').",
-			"Default `minLines: 5` — duplicates shorter than this are ignored. Lower for smaller snippets.",
-			"Use `ignore` to skip test files, generated code, or vendor directories.",
-			"Use `format` to filter by language (e.g., ['typescript', 'python']).",
-			"After finding duplicates, use `ast_grep` to plan refactoring, or `search` to find all occurrences.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("find_duplicates"),
 		parameters: jscpdSchema,
 		async execute(
 			_toolCallId: string,

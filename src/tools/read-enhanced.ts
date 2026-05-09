@@ -16,6 +16,7 @@ import {
 } from "../read-render.ts";
 import { executeSafe } from "./shared";
 import { withOutputTruncation } from "../shared/truncate.ts";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export interface RegisterReadEnhancedToolOptions {
 	/** Inject a reader (e.g. custom command runner); defaults to {@link SmartFileReader}. */
@@ -35,14 +36,7 @@ export function registerReadEnhancedTool(
 		description,
 		promptSnippet:
 			"structure-aware file reading — for large files, JSON/YAML, with smart formatting",
-		promptGuidelines: [
-			"Use `read_enhanced` when you need TOKEN-EFFICIENT, syntax-preserving excerpts: functions/classes (code), jq/yq slices (JSON/YAML/TOML/XML), or bat-highlighted text.",
-			"Prefer the builtin `read` tool for tiny files where you already know you need exact full verbatim content line-by-line.",
-			"For JSON, pass `jqQuery` (e.g. `.dependencies`) to drill into large package/manifest/config files.",
-			"For YAML/TOML/CSV, pass `yqQuery` when you only need rows or a subtree (requires mikefarah `yq` on PATH; CSV uses `-p csv`).",
-			"Check the `fallbacks` line in output: ast-grep/jq/yq/bat may be unavailable and native fallbacks preserve structure only partially.",
-			"When ast-grep cannot match idioms (e.g. unconventional exports), the tool falls back to `bat` or plain read.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("read_enhanced"),
 		parameters: readEnhancedSchema,
 		async execute(
 			_toolCallId: string,

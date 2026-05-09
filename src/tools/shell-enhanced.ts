@@ -13,6 +13,7 @@ import {
 	type ShellEnhancedParams,
 } from "../shell-render.ts";
 import { executeSafe } from "./shared";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export interface RegisterShellEnhancedToolOptions {
 	executor?: NushellJsonExecutor;
@@ -35,14 +36,7 @@ export function registerShellEnhancedTool(
 		label: "Enhanced Shell",
 		description,
 		promptSnippet: "structured shell execution with JSON pipelines — eliminates parsing ambiguity",
-		promptGuidelines: [
-			"Use `shell_enhanced` whenever you **want tabular/machine-shaped results** (`ls`, `ps`, `$env`, `git log/status`) without hand-parsing columns from raw POSIX text.",
-			"Prefer the builtin **bash**/shell helpers for **opaque one-off scripting**, interactive TUIs, or commands not covered by the JSON pipeline heuristics.",
-			"Keep `enforceJson: true` (default) whenever Nushell is installed—pipelines terminate with deterministic JSON blobs consumable downstream.",
-			"Set `enforceJson: false` to force verbatim POSIX semantics even when Nu is installed (heavy escape sequences stay untouched).",
-			"Tune `fallbackToBun` / `fallbackToBun:false` when POSIX must skip the **Bun `$` shell** tier (import `{ $ } from 'bun'`, spec `Bun.$`) and go straight to `bash`/`sh`.",
-			"If the builtin **`AbortSignal`** is aborted, timeouts + cancellation merge via **`AbortSignal.any`** into **Nu/bash spawns**. The **`Bun.$`** tier races **`signal.abort`** against the shell Promise (exit **125**) instead of injecting a Bun kill hook.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("shell_enhanced"),
 		parameters: shellEnhancedSchema,
 		async execute(
 			_toolCallId: string,

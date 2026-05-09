@@ -15,6 +15,7 @@ import {
 } from "../ls-render.ts";
 import { executeSafe } from "./shared.ts";
 import { withOutputTruncation } from "../shared/truncate.ts";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export interface RegisterLsEnhancedToolOptions {
 	mapper?: BrootTopologyMapper;
@@ -28,13 +29,7 @@ export function registerLsEnhancedTool(pi: ExtensionAPI, description: string, op
 		label: "Enhanced Directory Listing",
 		description,
 		promptSnippet: "repository topology mapping — structured directory trees with metadata",
-		promptGuidelines: [
-			"Use `ls_enhanced` when you need a **hierarchical project map**: nested directories, inferred file roles (extension/category), sizes, optional git porcelain XY codes, JSON-friendly topology payloads.",
-			"Prefer builtin `find_files`, `shell_enhanced`, or POSIX `ls` when you mainly need flat path lists without structure or metadata stitching.",
-			"Set `preferBroot: false` to force deterministic fs scans (helps when broot emits nonstandard trees or hangs in CI).",
-			"Tune `depth` aggressively on huge repos—the JSON payload inherits the walker depth cap.",
-			"Use `filterTypes` (`ts`, `code`, `directory`, …), `minSizeBytes`, `maxSizeBytes` to constrain token usage before truncation kicks in.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("ls_enhanced"),
 		parameters: lsEnhancedSchema,
 		async execute(
 			_toolCallId: string,

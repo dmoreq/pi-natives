@@ -18,6 +18,7 @@ import { withOutputTruncation } from "../shared/truncate";
 import { extractSnippet } from "../shared/utils";
 import { collectFilesWithContent } from "../shared/fs";
 import { GrepError } from "../shared/errors";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerBm25Tool(pi: ExtensionAPI) {
 	pi.registerTool({
@@ -25,11 +26,7 @@ export function registerBm25Tool(pi: ExtensionAPI) {
 		label: "Concept Search (BM25)",
 		description: "Relevance-ranked file content search using BM25. Use for open-ended or conceptual queries.",
 		promptSnippet: "search file content by relevance (BM25 ranking) — for conceptual discovery, not exact patterns",
-		promptGuidelines: [
-			"Use `concept_search` for CONCEPTUAL or OPEN-ENDED searches where you don't know the exact terms to match.",
-			"Do NOT use `concept_search` when you have a precise regex pattern — use `search` instead.",
-			"BM25 ranks by relevance; results may not contain ALL query terms.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("concept_search"),
 		parameters: bm25Schema,
 		async execute(
 			_toolCallId: string,

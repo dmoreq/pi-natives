@@ -14,6 +14,7 @@ import { grep, GrepError } from "../ripgrep";
 import { renderGrepCall, renderGrepResult, type GrepToolParams, type GrepToolDetails } from "../render";
 import { executeSafe, formatContentMatches } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerSearchTool(pi: ExtensionAPI, searchDescription: string) {
 	pi.registerTool({
@@ -21,11 +22,7 @@ export function registerSearchTool(pi: ExtensionAPI, searchDescription: string) 
 		label: "Grep",
 		description: searchDescription,
 		promptSnippet: "search file contents with regex (ripgrep engine) — your DEFAULT content search tool",
-		promptGuidelines: [
-			"Use the `search` tool for ALL content searches. Do NOT shell out to grep/rg/ag/ack.",
-			"Prefer `search` over `concept_search` when you know the EXACT regex pattern to match.",
-			"Use `search` over `ripgrep` for standard searches — `ripgrep` is only for advanced features (multiline, hidden files, count mode).",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("search"),
 		parameters: searchSchema,
 		async execute(
 			_toolCallId: string,

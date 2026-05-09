@@ -14,6 +14,7 @@ import { fzfSearch, FzfError } from "../fzf";
 import { renderFzfCall, renderFzfResult, type FzfSearchParams, type FzfSearchDetails } from "../fzf-render";
 import { executeSafe } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerFzfTool(pi: ExtensionAPI, fzfDescription: string) {
 	pi.registerTool({
@@ -21,13 +22,7 @@ export function registerFzfTool(pi: ExtensionAPI, fzfDescription: string) {
 		label: "Fuzzy Find (fzf)",
 		description: fzfDescription,
 		promptSnippet: "fuzzy file PATH search (fzf engine) — for approximate filenames, NOT content",
-		promptGuidelines: [
-			"Use `fuzzy_find` when you know APPROXIMATE file names but not exact paths.",
-			"Prefer `fuzzy_find` over `search` (regex) for filename discovery.",
-			"Use `search` for file CONTENT searches and `concept_search` for conceptual search.",
-			"Query terms in `fuzzy_find` can be in any order and don't need to be contiguous.",
-			"Combine `fuzzy_find` → `search`: find the file with fuzzy_find, then grep its contents with search.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("fuzzy_find"),
 		parameters: fzfSchema,
 		async execute(
 			_toolCallId: string,

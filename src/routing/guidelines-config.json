@@ -1,0 +1,318 @@
+{
+	"tools": {
+		"search": {
+			"primaryUse": "Default regex-based search of file contents (ripgrep engine), gitignore-aware, structured match output.",
+			"triggers": [
+				"You have a precise pattern to find in source text (identifier, TODO, error string, signature fragment).",
+				"You want line-anchored matches with optional glob/type filters without advanced ripgrep-only knobs.",
+				"You are pairing with find_files/fuzzy_find: discover paths first, then search contents here."
+			],
+			"avoid": [
+				"Conceptual / natural-language discovery → concept_search.",
+				"Multiline-regex, hidden files, per-file counts, fixed-strings-at-scale → ripgrep.",
+				"Ast metavariable or structural refactor patterns → ast_grep; security/rule packs → semgrep.",
+				"Filename or path discovery only → find_files or fuzzy_find (not content)."
+			],
+			"critical": [
+				"This is the default content-search tool — do not shell out to grep, rg, ag, or ack.",
+				"Prefer search over ripgrep for ordinary content searches.",
+				"Prefer search over concept_search when you can state an exact regex (or trivial literal)."
+			],
+			"examples": [
+				"Pattern \\bauthenticate\\(.*\\)",
+				"TODO|FIXME across *.ts via glob/type",
+				"Exception class name after narrowing with find_files"
+			]
+		},
+		"concept_search": {
+			"primaryUse": "BM25 relevance-ranked content search when the query is topical or fuzzy, not a fixed regex.",
+			"triggers": [
+				"You have a natural-language or bag-of-words query (themes, features, \"where is auth handled?\").",
+				"You lack a reliable exact pattern but need the most relevant passages first.",
+				"You want ranked snippets rather than exhaustive line-by-line regex coverage."
+			],
+			"avoid": [
+				"Exact regex or literal you can write directly → search (or ripgrep for advanced modes).",
+				"Structural / AST rules → semgrep or ast_grep.",
+				"Finding files by name or path → find_files or fuzzy_find."
+			],
+			"critical": [
+				"Ranking is probabilistic — not every query term appears in every hit.",
+				"Do not substitute concept_search for precise symbol lookup when regex is feasible."
+			],
+			"examples": [
+				"\"rate limiting middleware\" across the repo",
+				"\"database migration errors\" exploratory pass",
+				"After narrowing directories with find_files, run a narrower conceptual query"
+			]
+		},
+		"ripgrep": {
+			"primaryUse": "Advanced ripgrep surface: multiline, count/files-with-matches modes, hidden paths, ignoring gitignore, timeouts, optional fixed strings.",
+			"triggers": [
+				"You need multiline patterns or match-count-per-file / files-with-matches listing.",
+				"You must scan hidden paths or deliberately bypass ignore rules (use carefully).",
+				"You need knobs not exposed on search (timeouts, fixedStrings, column limits)."
+			],
+			"avoid": [
+				"Standard single-line content search → search.",
+				"Semantic / AST structure → semgrep or ast_grep.",
+				"Path listing by glob/name → find_files; approximate paths → fuzzy_find."
+			],
+			"critical": [
+				"Reach for ripgrep only when search parameters are insufficient — keep defaults on search.",
+				"Combining unsafe flags (noIgnore + hidden) can surface secrets; minimize scope."
+			],
+			"examples": [
+				"multiline: true across config templates",
+				"mode: count to compare hit density per file",
+				"mode: filesWithMatches for a coarse file set before search"
+			]
+		},
+		"find_files": {
+			"primaryUse": "Fast fd-backed discovery of paths by name fragment, extension, type, or glob — respects .gitignore by default.",
+			"triggers": [
+				"You know filename, extension, or glob criteria (\"all *.test.ts\", \"Dockerfile\")",
+				"You need deterministic path lists without scoring or fuzzy typo tolerance.",
+				"You want breadth-first enumeration (empty pattern can list reachable files)."
+			],
+			"avoid": [
+				"Approximate / mistyped filenames → fuzzy_find.",
+				"Searching inside file bodies → search or concept_search.",
+				"Rich repo topology + metadata stitching → ls_enhanced.",
+				"Clone / duplication analysis → find_duplicates."
+			],
+			"critical": [
+				"find_files answers \"which paths\" — never substitute it for grep-style content tasks.",
+				"Pair with search: narrow files here, grep contents there."
+			],
+			"examples": [
+				"extension: ts under packages/",
+				"pattern: migration glob **/*.sql",
+				"Empty pattern to inventory before filtering in-agent"
+			]
+		},
+		"fuzzy_find": {
+			"primaryUse": "Fuzzy path matching (fzf) for approximate filenames or shuffled path fragments — returns paths, not content.",
+			"triggers": [
+				"You remember part of a path or non-contiguous tokens (\"auth mid\" → src/auth/middleware.ts).",
+				"Typos or uncertain spelling of file or directory names.",
+				"You need quick interactive-style ranking over file paths."
+			],
+			"avoid": [
+				"Exact glob or extension filters you can express cleanly → find_files.",
+				"Content search → search or concept_search.",
+				"Repository structure maps with sizes/git hints → ls_enhanced."
+			],
+			"critical": [
+				"Results are paths only — follow with search for text inside files.",
+				"Query tokens may appear in any order; not a regex."
+			],
+			"examples": [
+				"\"user repo\" when the path string is half-remembered",
+				"\"config prod\" to surface likely env files",
+				"Then run search on chosen paths"
+			]
+		},
+		"semgrep": {
+			"primaryUse": "Semgrep static analysis — AST-aware rules for bugs, security, and policy checks beyond regex.",
+			"triggers": [
+				"You need security / SAST-style checks or team rule packs (config mode).",
+				"You match language structure (control flow, dangerous APIs) that regex would miss or over-match.",
+				"You want rule-driven guidance with semgrep's pattern language."
+			],
+			"avoid": [
+				"Plain text or trivial literals → search.",
+				"Metavariable refactoring / rewriter workflows → ast_grep.",
+				"Concept exploration without rules → concept_search.",
+				"Duplicate-block detection → find_duplicates.",
+				"Line counts → count_lines."
+			],
+			"critical": [
+				"When semgrep reports findings, corroborate with search on call sites if needed.",
+				"Prefer semgrep over regex whenever language semantics matter for vulnerability classes."
+			],
+			"examples": [
+				"Insecure hashing / TLS patterns via registry rules",
+				"Banned API usage with autofix disabled for review",
+				"Combining pattern mode for one-off audits"
+			]
+		},
+		"ast_grep": {
+			"primaryUse": "ast-grep structural search and rewriting with metavariables ($VAR) for code shape discovery and safe refactors.",
+			"triggers": [
+				"You capture arguments, arity, call shapes, or class members structurally.",
+				"You plan repeated refactors (rewrite) with previews.",
+				"You need AST-accurate matches where regex brittleness is high."
+			],
+			"avoid": [
+				"Team security/regression packs → semgrep.",
+				"Literal-only quick grep → search.",
+				"Copy-paste clones → find_duplicates.",
+				"Conceptual prose search → concept_search.",
+				"Path discovery → find_files / fuzzy_find."
+			],
+			"critical": [
+				"semgrep optimizes for policy/security signals; ast_grep optimizes for structural edit/search loops.",
+				"Specify language (`-l`) when required for correct trees; verify before bulk rewrite."
+			],
+			"examples": [
+				"Find all calls to deprecatedHelper(...) with $$$ARGS",
+				"Rewrite exports after preview: true",
+				"Pair with search to validate edge strings after structural pass"
+			]
+		},
+		"count_lines": {
+			"primaryUse": "Tokei-based statistics: code / comment / blank breakdowns and language totals (\"cloc but faster\").",
+			"triggers": [
+				"You need LOC, language mix, or comment ratios for a path or repo.",
+				"You want per-file listing using files: true or language filters via types.",
+				"You exclude vendor trees with exclude lists."
+			],
+			"avoid": [
+				"Finding text inside files → search / concept_search.",
+				"Listing paths by pattern → find_files / fuzzy_find.",
+				"Structural rules → semgrep / ast_grep.",
+				"Duplicate detection → find_duplicates."
+			],
+			"critical": [
+				"count_lines measures volume present — it does not search for features or symbols.",
+				"Use parameters (files, types, exclude) to keep output token-safe on large repos."
+			],
+			"examples": [
+				"Overall language table for services/",
+				"files: true with types: [\"TypeScript\"]",
+				"exclude: [\"node_modules\", \"dist\"]"
+			]
+		},
+		"find_duplicates": {
+			"primaryUse": "jscpd clone detection — exact and near-duplicate blocks for refactors and deduplication planning.",
+			"triggers": [
+				"You suspect copy-paste maintenance drag or redundant modules.",
+				"You tune minLines / mode (strict vs mild) for snippet size.",
+				"You filter languages or skip generated/test trees with ignore."
+			],
+			"avoid": [
+				"Single-pattern text search → search.",
+				"Security rules → semgrep.",
+				"Shape-based refactors of one pattern → ast_grep.",
+				"Line totals → count_lines."
+			],
+			"critical": [
+				"Follow findings with ast_grep or search to plan merges; jscpd flags similarity, not intent.",
+				"Default minLines ignores tiny noise — lower only when justified."
+			],
+			"examples": [
+				"mode: strict for identical clones",
+				"mode: mild across shared utility folders",
+				"ignore vendor and fixtures before reporting"
+			]
+		},
+		"read_enhanced": {
+			"primaryUse": "Structure-aware reading: code skeletons, data slicing, highlighted excerpts — optimized for token efficiency.",
+			"triggers": [
+				"Large source where you need signatures or structure instead of full paste.",
+				"JSON/YAML/TOML/CSV where jq/yq queries pull a subtree without dumping the file.",
+				"You want bat-style highlighting when available."
+			],
+			"avoid": [
+				"Tiny files where verbatim full content is simpler → builtin read.",
+				"Writing or mutating content → write_enhanced / edit_enhanced."
+			],
+			"critical": [
+				"Read the fallbacks line in output — ast-grep/jq/yq/bat may be absent.",
+				"Pass jqQuery / yqQuery to avoid shipping entire large configs to the model."
+			],
+			"examples": [
+				"jqQuery: .dependencies on package.json",
+				"yqQuery for one key in a large YAML manifest",
+				"TypeScript file for outline-level context before edit_enhanced"
+			]
+		},
+		"write_enhanced": {
+			"primaryUse": "Atomic, backup-friendly whole-file writes with optional streaming for large payloads (Bun-native path).",
+			"triggers": [
+				"You replace entire files where atomic rename prevents torn writes.",
+				"You need optional .bak snapshots before risky changes.",
+				"You stream large content to temp then rename for safety."
+			],
+			"avoid": [
+				"Small scratch files without durability needs → builtin write.",
+				"Surgical in-file edits → edit_enhanced (code) or patch flow."
+			],
+			"critical": [
+				"Choose atomic false only when you accept direct writes; understand append + atomic read-merge costs.",
+				"Enable backup for destructive refactors; capture returned backup path when present."
+			],
+			"examples": [
+				"Regenerate generated file with atomic: true, backup: true",
+				"Large asset with streaming then rename",
+				"mode: append with atomic: true for concurrent-reader safety (mind size cost)"
+			]
+		},
+		"edit_enhanced": {
+			"primaryUse": "AST-aware edits via ast-grep rewrite with preview and backups; falls back to literal replace for non-code.",
+			"triggers": [
+				"Refactors expressed as metavariable-safe patterns and replacements.",
+				"You need preview: true before touching disk on risky transforms.",
+				"You want backups (default on) around structural edits."
+			],
+			"avoid": [
+				"One-line typo with known exact snippet → builtin edit.",
+				"Whole-file replacement → write_enhanced.",
+				"Policy/security scanning → semgrep."
+			],
+			"critical": [
+				"preview first on dangerous changes; treat syntax_ok: false as blocking until fixed.",
+				"scope narrows are forward-compatible — heed warnings if behavior is still whole-file.",
+				"Without ast-grep, metavariable patterns will not run — only literal paths work."
+			],
+			"examples": [
+				"preview: true rename of helper($X) → newHelper($X)",
+				"Literal fallback for README touch-up",
+				"backup on while batching refactors"
+			]
+		},
+		"shell_enhanced": {
+			"primaryUse": "Structured shell via Nushell JSON pipelines with Bun/POSIX fallbacks — machine-shaped output for agents.",
+			"triggers": [
+				"Commands like ls, ps, git log/status, $env where JSON rows beat free text.",
+				"You want enforceJson: true (default) when Nu is available."
+			],
+			"avoid": [
+				"Interactive TUIs or opaque scripts → builtin shell/bash.",
+				"When you already have clean JSON from a dedicated tool, do not re-wrap unnecessarily."
+			],
+			"critical": [
+				"Respect cancellation: AbortSignal merges across Nu/bash/Bun.$ tiers per implementation.",
+				"Use enforceJson: false when POSIX verbatim output is required.",
+				"Tune fallbackToBun when Bun shell must be skipped."
+			],
+			"examples": [
+				"git status as structured records",
+				"ls with sortable columns for agents",
+				"Nu absent → bash fallback with enforceJson: false"
+			]
+		},
+		"ls_enhanced": {
+			"primaryUse": "Repository topology: hierarchical trees, sizes, optional git hints, JSON-friendly maps (broot + native fallback).",
+			"triggers": [
+				"You need nested structure, role hints, or filters (type/size) for orientation.",
+				"You want broot output when available; deterministic scans when preferBroot: false."
+			],
+			"avoid": [
+				"Flat exhaustive path lists by pattern → find_files.",
+				"Fuzzy partial path recall → fuzzy_find.",
+				"Shell-level json for one command → shell_enhanced."
+			],
+			"critical": [
+				"Cap depth and filterTypes on huge repos to control payload size before truncation.",
+				"preferBroot: false if broot misbehaves in CI or hangs."
+			],
+			"examples": [
+				"depth: 3 overview of src/",
+				"filterTypes: ts for TypeScript-only map",
+				"Git metadata on for change awareness"
+			]
+		}
+	}
+}

@@ -13,6 +13,7 @@ import {
 	type WriteEnhancedDetails,
 } from "../write-render.ts";
 import { executeSafe } from "./shared";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export interface RegisterWriteEnhancedToolOptions {
 	/** Inject writer (defaults to fresh {@link BunFileWriter}). */
@@ -32,13 +33,7 @@ export function registerWriteEnhancedTool(
 		description,
 		promptSnippet:
 			"high-performance file writing — atomic operations, streaming, backups for large content",
-		promptGuidelines: [
-			"Use `write_enhanced` when you need ATOMIC whole-file updates, optional `.bak` snapshots, or large payloads with optional streaming to a temp file before rename.",
-			"Prefer the builtin `write` tool for small, simple scratch edits where atomicity and backup are unnecessary.",
-			"Set `atomic: false` for a direct replace `Bun.write`, or append via read-merge + `Bun.write` (`mode: 'append'`, `atomic: false`) instead of posix `appendFile`.",
-			"For append that must stay consistent with concurrent readers, use `mode: 'append'` with `atomic: true` (read-merge-write + atomic rename; cost scales with file size).",
-			"Enable `backup: true` before risky refactors to preserved paths; use the `backup` path in output if you need to revert manually.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("write_enhanced"),
 		parameters: writeEnhancedSchema,
 		async execute(
 			_toolCallId: string,

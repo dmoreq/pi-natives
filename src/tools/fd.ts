@@ -14,6 +14,7 @@ import { fdFind, FdError } from "../fd";
 import { renderFdCall, renderFdResult, type FdFindParams, type FdFindDetails } from "../fd-render";
 import { executeSafe } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerFdTool(pi: ExtensionAPI, fdDescription: string) {
 	pi.registerTool({
@@ -21,13 +22,7 @@ export function registerFdTool(pi: ExtensionAPI, fdDescription: string) {
 		label: "Find Files (fd)",
 		description: fdDescription,
 		promptSnippet: "fast file and directory finding (fd engine) — for listing files by name/extension/type",
-		promptGuidelines: [
-			"Use `find_files` for ALL file/directory finding tasks — much faster than `find`.",
-			"Use `search` or `ripgrep` for file CONTENT searches.",
-			"Use `fuzzy_find` for FUZZY filename matching.",
-			"Combine `find_files` + `search`: find files with find_files, then grep their contents with search.",
-			"Empty `pattern` lists ALL files — useful for project exploration.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("find_files"),
 		parameters: fdSchema,
 		async execute(
 			_toolCallId: string,

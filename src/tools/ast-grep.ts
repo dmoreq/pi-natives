@@ -24,6 +24,7 @@ import {
 } from "../ast-grep-render";
 import { executeSafe } from "./shared";
 import { withOutputTruncation } from "../shared/truncate";
+import { PromptBuilder } from "../routing/prompt-builder";
 
 export function registerAstGrepTool(pi: ExtensionAPI, astGrepDescription: string) {
 	pi.registerTool({
@@ -31,13 +32,7 @@ export function registerAstGrepTool(pi: ExtensionAPI, astGrepDescription: string
 		label: "ast-grep",
 		description: astGrepDescription,
 		promptSnippet: "structural code search & refactoring via AST patterns — for precise STRUCTURAL matching with metavariables",
-		promptGuidelines: [
-			"Use `ast_grep` when you need STRUCTURAL search: matching code shapes, capturing metavariables ($X, $$$ARGS), or rewriting code.",
-			"Use `semgrep` when you need SECURITY/LINTING analysis: finding bugs, vulnerabilities, or enforcing coding standards.",
-			"ast-grep excels at: finding all call sites of a function, capturing arguments, refactoring patterns across a codebase.",
-			"Combine with `search` for follow-up text searches on matched files.",
-			"Use `-l <lang>` to specify the target language — required for accurate AST matching.",
-		],
+		promptGuidelines: PromptBuilder.guidelinesFor("ast_grep"),
 		parameters: astGrepSchema,
 		async execute(
 			_toolCallId: string,
