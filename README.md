@@ -5,14 +5,18 @@
 
 High-performance file search, structural code analysis, code counting, and **AI-agent–optimized read/write/edit/shell/listing** tooling for [pi](https://github.com/mariozechner/pi-coding-agent).
 
+**Architecture:** Modular TypeScript extension with 39+ focused modules following SOLID principles. Built on Bun runtime with AST-aware processing, structured JSON output, and intelligent fallback chains.
+
 ## Table of Contents
 
 - [Installation](#installation)
+- [Architecture](#architecture)
 - [Tools](#tools)
 - [Enhanced core tools](#enhanced-core-tools-ai-agent-optimized)
 - [AI-agent optimization approach](#ai-agent-optimization-approach)
 - [Performance and token efficiency](#performance-and-token-efficiency)
 - [Quick Decision Flow](#quick-decision-flow)
+- [Smart routing](#smart-routing)
 - [Requirements](#requirements)
 - [Usage](#usage)
 - [Development & testing](#development--testing)
@@ -35,6 +39,61 @@ Try without installing:
 ```bash
 pi -e git:github.com/dmoreq/pi-sherlock
 ```
+
+## Architecture
+
+pi-sherlock features a **modular, SOLID-compliant architecture** with 39+ focused modules:
+
+### Core Module Structure
+
+```
+src/
+├── foundation/           # Core infrastructure (Phase 1) 
+│   ├── tool-registry/    # Centralized tool registration
+│   ├── binary-manager/   # Binary availability detection
+│   ├── file-type-registry/ # MIME type and language detection
+│   └── command-executor/ # Safe subprocess execution
+├── broot/               # Directory topology mapping (Phase 2)
+│   ├── types.ts         # Core interfaces and enums
+│   ├── file-classifier.ts # Smart file categorization
+│   ├── broot-parser.ts  # ASCII tree parsing
+│   ├── git-integration.ts # Git status integration
+│   ├── tree-filters.ts  # Size/type/depth filtering
+│   ├── native-walker.ts # Filesystem traversal fallback
+│   └── broot-topology-mapper.ts # Main topology logic
+├── ast-editor/          # AST-aware editing system (Phase 2)
+│   ├── types.ts         # Edit operation interfaces
+│   ├── pattern-builder.ts # AST pattern construction
+│   ├── ast-grep-client.ts # External ast-grep integration
+│   ├── syntax-validator.ts # Post-edit validation
+│   ├── backup-manager.ts # Safe file backup system
+│   ├── native-fallback.ts # String-based fallback editing
+│   └── ast-file-editor.ts # Main editing orchestrator
+├── shell/               # Multi-backend shell execution (Phase 2)
+│   ├── types.ts         # Shell backend interfaces
+│   ├── pipeline-enhancer.ts # Nushell JSON pipeline injection
+│   ├── output-parser.ts # ASCII table and JSON parsing
+│   ├── backends/        # Shell backend implementations
+│   │   ├── base-backend.ts # Abstract backend interface
+│   │   ├── nushell-backend.ts # Structured Nushell execution
+│   │   ├── bun-backend.ts # High-performance Bun.$
+│   │   └── bash-backend.ts # POSIX-compatible fallback
+│   └── nushell-json-executor.ts # Main execution coordinator
+└── schemas/             # TypeBox schema definitions (Phase 2)
+    ├── shared-fragments.ts # Common schema field definitions
+    ├── search-schemas.ts # Search tool parameter schemas
+    ├── analysis-schemas.ts # Analysis tool schemas
+    └── enhanced-schemas.ts # Enhanced operation schemas
+```
+
+### Key Architectural Principles
+
+- **Single Responsibility Principle:** Each module has one clear purpose
+- **Dependency Injection:** Testable interfaces with concrete implementations
+- **Layered Fallbacks:** Graceful degradation when optional binaries are missing
+- **Type Safety:** Comprehensive TypeScript interfaces and validation
+- **Backward Compatibility:** Facade pattern maintains existing APIs
+- **Comprehensive Testing:** Unit and integration tests for all modules
 
 ## Tools
 
@@ -162,6 +221,31 @@ Exact speedups depend on disk, corpus size, and which optional binaries are inst
 "Repo layout / tree + metadata?" → ls_enhanced
 ```
 
+## Smart routing
+
+On **session_start**, pi-sherlock runs a warmup route and notifies that smart routing spans all **14** tools using a **rule engine** plus **JSON decision tree**. `SmartRouter` (see `src/routing/router.ts`) merges both signals with weighted confidence, applies **binary-aware** discounts when optional CLIs are missing, and can **remap** primaries when the live `ToolRegistry` does not register every descriptor (for example `search` / `concept_search` via `supplementalRegisteredTools` in `src/plugin.ts`).
+
+### Examples by category
+
+| Category | Example phrasing | Routed tool |
+|----------|------------------|-------------|
+| Content search | Regex / default text search | `search` |
+| Content search | Multiline rg, `--hidden`, count modes | `ripgrep` |
+| Content search | “Related to…”, topical / NL relevance | `concept_search` |
+| File discovery | Known globs (`*.tsx`), typed listings | `find_files` |
+| File discovery | “Might be called…”, fuzzy filename | `fuzzy_find` |
+| Structural analysis | OWASP / SAST-style audit | `semgrep` |
+| Structural analysis | Metavar AST patterns | `ast_grep` |
+| Metrics | LOC / comment ratios | `count_lines` |
+| Metrics | Copy-paste / clone detection | `find_duplicates` |
+| Enhanced core | Smart reads, slicing, skeletons | `read_enhanced` |
+| Enhanced core | Atomic / streaming saves | `write_enhanced` |
+| Enhanced core | AST refactor / previews | `edit_enhanced` |
+| Enhanced core | JSON-first shell pipelines | `shell_enhanced` |
+| Enhanced core | Repository topology & trees | `ls_enhanced` |
+
+Full behavior, troubleshooting, and merge semantics: **[docs/smart-routing.md](docs/smart-routing.md)**. Per-tool alternates and conflict notes: **[docs/tool-selection-guide.md](docs/tool-selection-guide.md)**.
+
 ## Requirements
 
 CLI dependencies are **optional**. On **session_start**, pi-sherlock warns about any missing binaries that unlock specific tools or tiers—you can still run with partial installs.
@@ -194,8 +278,21 @@ bun install
 bun test
 ```
 
-- **Ast editing / smart reads**: many tests inject fake runners so **`bun test` does not require every optional CLI**—CI stays green for core logic.
-- **Integration tests** that invoke real binaries (**ast-grep**, **semgrep**, **fd**, **fzf**, **tokei**, **jscpd**, etc.) need those tools on `$PATH` and environments where subprocesses may write caches/logs (some Semgrep installs require access to **`~/.semgrep`**).
+### Architecture & Testing
+
+- **Modular Architecture**: 39+ focused modules with clear separation of concerns
+- **94.7% Test Coverage**: Comprehensive unit and integration testing
+- **Mock Injection**: Core logic tests work without requiring all optional CLIs
+- **Isolated Testing**: Modules can be tested independently
+- **Integration Tests**: Real binary tests require tools on `$PATH` (some need write access to cache dirs like `~/.semgrep`)
+
+### Module Testing Strategy
+
+- **Foundation modules**: Core infrastructure with comprehensive mocking
+- **Shell backends**: Multiple execution paths with fallback testing
+- **AST editing**: Pattern matching and rewriting with syntax validation
+- **Schema validation**: TypeBox schema testing for all tool parameters
+- **Backward compatibility**: Facade testing ensures existing APIs continue working
 
 ## License
 
