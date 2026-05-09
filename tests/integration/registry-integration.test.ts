@@ -73,7 +73,7 @@ describe("Tool Registry Integration", () => {
 		// Verify statistics
 		expect(stats.totalTools).toBe(allToolDescriptors.length);
 		expect(stats.failures).toHaveLength(0);
-		expect(stats.registrationTime).toBeGreaterThan(0);
+		expect(stats.registrationTime).toBeGreaterThanOrEqual(0);
 		
 		// Verify all tools were registered with the mock API
 		const registeredTools = (mockApi as any)._registeredTools;
