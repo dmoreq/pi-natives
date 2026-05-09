@@ -34,3 +34,4 @@ coverage/
 .pi/logs/
 .pi/artifacts/
 report/
+.worktrees/
