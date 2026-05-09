@@ -97,7 +97,7 @@ src/
 
 ## Tools
 
-The extension registers **14 tools**. Public names below are what the agent invokes in pi.
+The extension registers **15 tools**. Public names below are what the agent invokes in pi.
 
 ### Content search
 
@@ -137,6 +137,12 @@ The extension registers **14 tools**. Public names below are what the agent invo
 | `edit_enhanced` | AST-aware edit | **ast-grep** rewrite when possible, native substring fallback, preview/backups—targeted deltas instead of full-file rewrites. |
 | `shell_enhanced` | JSON-first shell | Prefer **Nushell** pipelines that coerce to structured JSON tables; Bun shell and POSIX **bash** fallbacks when needed. |
 | `ls_enhanced` | Repository topology | **`broot` `:print_tree`** when `br`/`broot` is available; otherwise a deterministic native walker. Emits hierarchical maps + metadata (and optional git hints) tuned for agents. |
+
+### Utility & Setup
+
+| Tool | Engine | Description |
+|------|--------|-------------|
+| `install_tools` | Auto-installer | **Automatically install missing dependencies** with user consent. Supports platform-specific package managers (brew, apt, winget, npm, pip, cargo). |
 
 ## Enhanced core tools (AI-agent optimized)
 
@@ -248,7 +254,14 @@ Full behavior, troubleshooting, and merge semantics: **[docs/smart-routing.md](d
 
 ## Requirements
 
-CLI dependencies are **optional**. On **session_start**, pi-sherlock warns about any missing binaries that unlock specific tools or tiers—you can still run with partial installs.
+CLI dependencies are **optional** and can be **auto-installed** with user consent. On **session_start**, pi-sherlock detects missing binaries and can automatically install required tools using your platform's package manager (Homebrew, APT, Winget, etc.). You can also use the `install_tools` command for manual installation.
+
+### Auto-Installation Features
+- ✅ **Smart Detection**: Automatically finds missing dependencies
+- ✅ **Platform Awareness**: Uses appropriate package managers (brew, apt, winget, npm, pip, cargo)
+- ✅ **User Consent**: Always asks permission before installing
+- ✅ **Selective Installation**: Installs required tools by default, optional tools on request
+- ✅ **Verification**: Confirms successful installation before proceeding
 
 | Binary | Used by | Notes |
 |--------|---------|--------|

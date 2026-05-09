@@ -61,6 +61,7 @@ import { registerWriteEnhancedTool } from "./tools/write-enhanced";
 import { registerEditEnhancedTool } from "./tools/edit-enhanced";
 import { registerShellEnhancedTool } from "./tools/shell-enhanced";
 import { registerLsEnhancedTool } from "./tools/ls-enhanced";
+import { registerInstallToolsTool } from "./tools/install-tools";
 
 // ── Load prompt descriptions at import time ─────────────────────────
 
@@ -78,6 +79,7 @@ const writeEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "pro
 const editEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "edit-enhanced.md"), "utf-8");
 const shellEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "shell-enhanced.md"), "utf-8");
 const lsEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "ls-enhanced.md"), "utf-8");
+const installToolsDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "install-tools.md"), "utf-8");
 
 const routingBinaryManager = new BinaryManager({ showNotifications: false });
 const routingToolRegistry = new ToolRegistry(routingBinaryManager);
@@ -89,40 +91,84 @@ const smartRouter = new SmartRouter(routingBinaryManager, FileTypeRegistry, rout
 // ── Extension entry point ──────────────────────────────────────────
 
 export default function piSherlockExtension(pi: ExtensionAPI) {
-	// Check binary availability on session start
-	pi.on("session_start", (_event, ctx) => {
+	// Enhanced binary manager with auto-installation support
+	const enhancedBinaryManager = new BinaryManager({
+		notifications: {
+			showNotifications: true,
+			notificationType: 'warning'
+		},
+		enableAutoInstall: true,
+		autoInstaller: {
+			requireUserConsent: true,
+			installRequired: true,
+			installOptional: false,
+			maxRetries: 3,
+			installTimeout: 300000, // 5 minutes
+			verifyInstallation: true
+		}
+	});
+
+	// Check binary availability and auto-install on session start
+	pi.on("session_start", async (_event, ctx) => {
 		smartRouter.route("routing readiness ping");
-		const bins: Array<[string, string, string]> = [
-			["rg", "ripgrep", "`brew install ripgrep`"],
-			["semgrep", "semgrep", "`brew install semgrep` or `pip install semgrep`"],
-			["fzf", "fzf", "`brew install fzf`"],
-			["fd", "fd", "`brew install fd`"],
-			["ast-grep", "ast-grep", "`brew install ast-grep`"],
-			["tokei", "tokei", "`brew install tokei`"],
-			["jscpd", "jscpd", "`npm i -g jscpd` or `brew install jscpd`"],
-			["jq", "jq", "`brew install jq`"],
-			["yq", "yq (mikefarah)", "`brew install yq`"],
-			["bat", "bat", "`brew install bat`"],
-			["nu", "Nushell", "`brew install nushell` or see https://www.nushell.sh"],
+		
+		// Define all binary requirements
+		const binaryRequirements = [
+			{ binary: 'rg', label: 'ripgrep', installCommand: 'brew install ripgrep', required: true },
+			{ binary: 'semgrep', label: 'semgrep', installCommand: 'brew install semgrep or pip install semgrep', required: true },
+			{ binary: 'fzf', label: 'fzf', installCommand: 'brew install fzf', required: true },
+			{ binary: 'fd', label: 'fd', installCommand: 'brew install fd', required: true },
+			{ binary: 'ast-grep', label: 'ast-grep', installCommand: 'npm install -g @ast-grep/cli', required: false },
+			{ binary: 'tokei', label: 'tokei', installCommand: 'brew install tokei', required: false },
+			{ binary: 'jscpd', label: 'jscpd', installCommand: 'npm install -g jscpd', required: false },
+			{ binary: 'jq', label: 'jq', installCommand: 'brew install jq', required: false },
+			{ binary: 'yq', label: 'yq', installCommand: 'brew install yq', required: false },
+			{ binary: 'bat', label: 'bat', installCommand: 'brew install bat', required: false },
+			{ binary: 'nu', label: 'Nushell', installCommand: 'brew install nushell', required: false },
+			{ 
+				binary: 'br', 
+				label: 'broot', 
+				installCommand: 'brew install broot', 
+				required: false,
+				customCheck: () => checkBinary('br') || checkBinary('broot')
+			}
 		];
-		for (const [binary, label, installCmd] of bins) {
-			if (!checkBinary(binary)) {
+		
+		// Check for missing binaries and trigger auto-installation
+		const missing = enhancedBinaryManager.getMissingRequirements(binaryRequirements);
+		
+		if (missing.length > 0) {
+			try {
+				await enhancedBinaryManager.notifyMissing(missing, ctx);
+				
+				// Get installation statistics
+				const stats = enhancedBinaryManager.getStats(binaryRequirements);
+				
+				if (stats.installations.successful > 0) {
+					ctx.ui.notify(
+						`pi-sherlock: Successfully auto-installed ${stats.installations.successful} tools!`,
+						"info"
+					);
+				}
+				
+				if (stats.installations.failed > 0) {
+					ctx.ui.notify(
+						`pi-sherlock: ${stats.installations.failed} tools failed to auto-install. See manual installation commands above.`,
+						"warning"
+					);
+				}
+			} catch (error) {
 				ctx.ui.notify(
-					`pi-sherlock: ${label} (${binary}) not found. Install via ${installCmd}.`,
-					"warning",
+					`pi-sherlock: Auto-installation failed: ${error instanceof Error ? error.message : String(error)}`,
+					"error"
 				);
 			}
 		}
-		if (!resolveBrootBinary()) {
-			ctx.ui.notify(
-				"pi-sherlock: Neither `br` nor `broot` is on PATH. `ls_enhanced` will use the native filesystem walker instead of broot `:print_tree` (install via `brew install broot`).",
-				"warning",
-			);
-		}
 
+		// Show routing readiness notification
 		ctx.ui.notify(
 			`pi-sherlock: Smart routing across ${PI_SHERLOCK_ROUTING_TOOL_COUNT} tools (rule engine + decision tree).`,
-			"info",
+			"info"
 		);
 	});
 
@@ -141,4 +187,5 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 	registerEditEnhancedTool(pi, editEnhancedDescription);
 	registerShellEnhancedTool(pi, shellEnhancedDescription);
 	registerLsEnhancedTool(pi, lsEnhancedDescription);
+	registerInstallToolsTool(pi, installToolsDescription);
 }
