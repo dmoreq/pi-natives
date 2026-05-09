@@ -12,8 +12,7 @@ import type {
 	ToolDescriptor, 
 	ToolRegistrationOptions, 
 	ToolRegistrationResult,
-	ToolRegistryStats,
-	ToolCategory 
+	ToolRegistryStats
 } from "./tool-descriptor";
 import { ToolCategory } from "./tool-descriptor";
 import { BinaryManager } from "./binary-manager";
