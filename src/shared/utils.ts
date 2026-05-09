@@ -58,3 +58,11 @@ export function extractSnippet(text: string, query: string, maxLen: number): str
 export function escapeRegex(s: string): string {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+/**
+ * Rough token estimate for LLM context (char length / 4, rounded up).
+ * Shared by smart reader and read rendering so the heuristic cannot drift.
+ */
+export function estimateTokens(content: string): number {
+	return Math.ceil(content.length / 4);
+}

@@ -11,6 +11,11 @@
  *   ast_grep         — structural search & refactoring via AST patterns (metavariables)
  *   count_lines      — count lines of code, comments, blanks by language
  *   find_duplicates  — detect duplicated/copy-pasted code blocks
+ *   read_enhanced    — structure-aware reads (ast-grep / jq / yq / bat smart routing)
+ *   write_enhanced   — Bun-native atomic writes, backups, optional streaming
+ *   edit_enhanced    — ast-grep rewrite + native fallback + preview/backups
+ *   shell_enhanced   — Nushell-first JSON shell + Bun/bash POSIX fallback
+ *   ls_enhanced      — repository topology listing (broot print_tree + fs fallback + git metadata)
  *
  * Trigger decision flow:
  *   "I know the regex"           → search
@@ -22,6 +27,11 @@
  *   "I need multiline/hidden/..."→ ripgrep
  *   "How many lines of code?"    → count_lines
  *   "Find duplicate code blocks"  → find_duplicates
+ *   "Skeleton / slice JSON-YAML?"   → read_enhanced (vs verbatim small read → builtin read)
+ *   "Atomic / backup / huge write?" → write_enhanced (vs tiny scratch → builtin write)
+ *   "Structural AST rewrite / preview diff?" → edit_enhanced (vs small text patch → builtin edit)
+ *   "Need JSON-shaped CLI output?"     → shell_enhanced (vs raw bash/tooling ambiguity)
+ *   "Repo layout / tree + metadata?"  → ls_enhanced (vs flat find_files or raw ls)
  */
 import * as path from "node:path";
 import { readFileSync } from "node:fs";
@@ -29,6 +39,7 @@ import { fileURLToPath } from "node:url";
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { checkBinary } from "./shared/cli";
+import { resolveBrootBinary } from "./broot-topology";
 
 import { registerSearchTool } from "./tools/search";
 import { registerBm25Tool } from "./tools/bm25";
@@ -39,6 +50,11 @@ import { registerRipgrepTool } from "./tools/ripgrep";
 import { registerAstGrepTool } from "./tools/ast-grep";
 import { registerTokeiTool } from "./tools/tokei";
 import { registerJscpdTool } from "./tools/jscpd";
+import { registerReadEnhancedTool } from "./tools/read-enhanced";
+import { registerWriteEnhancedTool } from "./tools/write-enhanced";
+import { registerEditEnhancedTool } from "./tools/edit-enhanced";
+import { registerShellEnhancedTool } from "./tools/shell-enhanced";
+import { registerLsEnhancedTool } from "./tools/ls-enhanced";
 
 // ── Load prompt descriptions at import time ─────────────────────────
 
@@ -50,7 +66,12 @@ const fdDescription       = readFileSync(path.resolve(__dirname, "..", "prompts"
 const ripgrepDescription  = readFileSync(path.resolve(__dirname, "..", "prompts", "ripgrep.md"), "utf-8");
 const astGrepDescription  = readFileSync(path.resolve(__dirname, "..", "prompts", "ast-grep.md"), "utf-8");
 const tokeiDescription    = readFileSync(path.resolve(__dirname, "..", "prompts", "tokei.md"), "utf-8");
-const jscpdDescription    = readFileSync(path.resolve(__dirname, "..", "prompts", "jscpd.md"), "utf-8");
+const jscpdDescription       = readFileSync(path.resolve(__dirname, "..", "prompts", "jscpd.md"), "utf-8");
+const readEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "read-enhanced.md"), "utf-8");
+const writeEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "write-enhanced.md"), "utf-8");
+const editEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "edit-enhanced.md"), "utf-8");
+const shellEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "shell-enhanced.md"), "utf-8");
+const lsEnhancedDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "ls-enhanced.md"), "utf-8");
 
 // ── Extension entry point ──────────────────────────────────────────
 
@@ -65,6 +86,10 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 			["ast-grep", "ast-grep", "`brew install ast-grep`"],
 			["tokei", "tokei", "`brew install tokei`"],
 			["jscpd", "jscpd", "`npm i -g jscpd` or `brew install jscpd`"],
+			["jq", "jq", "`brew install jq`"],
+			["yq", "yq (mikefarah)", "`brew install yq`"],
+			["bat", "bat", "`brew install bat`"],
+			["nu", "Nushell", "`brew install nushell` or see https://www.nushell.sh"],
 		];
 		for (const [binary, label, installCmd] of bins) {
 			if (!checkBinary(binary)) {
@@ -73,6 +98,12 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 					"warning",
 				);
 			}
+		}
+		if (!resolveBrootBinary()) {
+			ctx.ui.notify(
+				"pi-sherlock: Neither `br` nor `broot` is on PATH. `ls_enhanced` will use the native filesystem walker instead of broot `:print_tree` (install via `brew install broot`).",
+				"warning",
+			);
 		}
 	});
 
@@ -86,4 +117,9 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 	registerAstGrepTool(pi, astGrepDescription);
 	registerTokeiTool(pi, tokeiDescription);
 	registerJscpdTool(pi, jscpdDescription);
+	registerReadEnhancedTool(pi, readEnhancedDescription);
+	registerWriteEnhancedTool(pi, writeEnhancedDescription);
+	registerEditEnhancedTool(pi, editEnhancedDescription);
+	registerShellEnhancedTool(pi, shellEnhancedDescription);
+	registerLsEnhancedTool(pi, lsEnhancedDescription);
 }

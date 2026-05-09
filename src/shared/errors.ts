@@ -39,3 +39,15 @@ export type TokeiError = InstanceType<typeof TokeiError>;
 
 export const JscpdError = createErrorClass("JscpdError");
 export type JscpdError = InstanceType<typeof JscpdError>;
+
+export const SmartReadError = createErrorClass("SmartReadError");
+export type SmartReadError = InstanceType<typeof SmartReadError>;
+
+export const WriteEnhancedError = createErrorClass("WriteEnhancedError");
+export type WriteEnhancedError = InstanceType<typeof WriteEnhancedError>;
+
+export const AstEditError = createErrorClass("AstEditError");
+export type AstEditError = InstanceType<typeof AstEditError>;
+
+export const TopologyError = createErrorClass("TopologyError");
+export type TopologyError = InstanceType<typeof TopologyError>;

@@ -65,9 +65,9 @@ describe("Extension Loading", () => {
 		const piSherlockExtension = (await import("../src/index.ts")).default;
 		piSherlockExtension(mockApi);
 
-		// Expected tools: search, ripgrep, concept_search, fuzzy_find, find_files, 
-		// semgrep, ast_grep, tokei, jscpd
-		expect(registerToolMock).toHaveBeenCalledTimes(9);
+		// Expected tools: search, ripgrep, concept_search, fuzzy_find, find_files,
+		// semgrep, ast_grep, tokei, jscpd, read_enhanced, write_enhanced, edit_enhanced, shell_enhanced, ls_enhanced
+		expect(registerToolMock).toHaveBeenCalledTimes(14);
 	});
 });
 
@@ -84,6 +84,11 @@ describe("Tool Registration Functions", () => {
 			"../src/tools/ast-grep",
 			"../src/tools/tokei",
 			"../src/tools/jscpd",
+			"../src/tools/read-enhanced",
+			"../src/tools/write-enhanced",
+			"../src/tools/edit-enhanced",
+			"../src/tools/shell-enhanced",
+			"../src/tools/ls-enhanced",
 		];
 
 		for (const modulePath of modules) {

@@ -35,3 +35,10 @@ coverage/
 .pi/artifacts/
 report/
 .worktrees/
+
+# graphify (AST graph; regenerate with `graphify update .`)
+graphify-out/
+
+# local scratch
+.tmp-edit/
+.tmp-test/

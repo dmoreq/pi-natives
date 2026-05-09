@@ -248,6 +248,122 @@ export const tokeiSchema = Type.Object({
 	),
 });
 
+export const editEnhancedSchema = Type.Object({
+	path: Type.String({
+		description: "Path to file to edit (relative to workspace cwd or absolute)",
+		examples: ["src/app.ts", "README.md"],
+	}),
+	pattern: Type.String({
+		description:
+			"For code files with ast-grep: AST pattern (metavariables like $VAR, $$$REST). For non-code/native fallback: exact literal substring.",
+		examples: ["const $X = $Y", "OLD_TOKEN"],
+	}),
+	replacement: Type.String({
+		description: "Rewrite template (mirrors ast-grep `-r`) or literal replacement text for native mode",
+		examples: ["let $X = $Y", "NEW_TOKEN"],
+	}),
+	preview: Type.Optional(
+		Type.Boolean({
+			description:
+				"Dry-run: show ast-grep diff or native pseudo-diff without writing. Skips backups when true.",
+			default: false,
+		}),
+	),
+	backup: Type.Optional(
+		Type.Boolean({
+			description:
+				"Snapshot existing bytes to `{path}.bak.{timestamp}` before applying (recommended for production edits). Ignored during preview-only runs.",
+			default: true,
+		}),
+	),
+	nodeType: Type.Optional(
+		Type.Union(
+			[
+				Type.Literal("function"),
+				Type.Literal("class"),
+				Type.Literal("method"),
+				Type.Literal("variable"),
+				Type.Literal("generic"),
+			],
+			{
+				description:
+					"Optional `--strictness` hint for ast-grep (`generic`→smart, `function|class|method`→ast); `variable` keeps default strictness so TS declarators still match.",
+			},
+		),
+	),
+	scope: Type.Optional(
+		Type.Union([Type.Literal("file"), Type.Literal("function"), Type.Literal("class")], {
+			description:
+				"Granularity hint. **`file`** (implicit default) edits the entire file. **`function`** / **`class`** are RESERVED in this release: they behave like whole-file edits but add a warnings line to the response so tooling knows nested scope is not narrowed yet.",
+		}),
+	),
+	cwd: Type.Optional(
+		Type.String({
+			description: "Working directory used to resolve relative paths (normally the agent workspace cwd)",
+		}),
+	),
+});
+
+export const writeEnhancedSchema = Type.Object({
+	path: Type.String({
+		description: "Path to file to write (relative to workspace cwd or absolute)",
+		examples: ["src/app.ts", "notes.md", "tmp/output.json"],
+	}),
+	content: Type.String({
+		description: "Full file contents to write or append (UTF-8 text)",
+	}),
+	mode: Type.Optional(
+		Type.Union([Type.Literal("write"), Type.Literal("append")], {
+			description: "Replace file (`write`) or append bytes (`append`). Default: write",
+		}),
+	),
+	atomic: Type.Optional(
+		Type.Boolean({
+			description:
+				"Use temp file + rename for replace/append-atomic (default: true for write; default: false for append)",
+		}),
+	),
+	backup: Type.Optional(
+		Type.Boolean({
+			description: "Before overwrite, copy existing file to `{path}.bak.{timestamp}`",
+			default: false,
+		}),
+	),
+	streaming: Type.Optional(
+		Type.Boolean({
+			description:
+				"When atomic and payload is large, stream chunks to the temp file via Bun native writer (reduces peak memory)",
+			default: false,
+		}),
+	),
+});
+
+export const readEnhancedSchema = Type.Object({
+	path: Type.String({
+		description: "Path to file to read (relative to workspace or absolute)",
+		examples: ["src/app.ts", "package.json", "config.yaml"],
+	}),
+	jqQuery: Type.Optional(
+		Type.String({
+			description: "jq filter for JSON files (default: '.'); only used when file is detected as JSON",
+			examples: [".dependencies", ".scripts.build", '.. | .name? | select(. != null)'],
+		}),
+	),
+	yqQuery: Type.Optional(
+		Type.String({
+			description:
+				"yq expression for YAML/TOML/XML/CSV when yq is available (default: '.'; CSV uses `-p csv`)",
+			examples: [".spec.replicas", ".tool.poetry", '.[0]', ".name"],
+		}),
+	),
+	maxChars: Type.Optional(
+		Type.Integer({ description: "Override max output characters before truncation", default: 10_000 }),
+	),
+	maxLines: Type.Optional(
+		Type.Integer({ description: "Override max output lines before truncation", default: 200 }),
+	),
+});
+
 export const jscpdSchema = Type.Object({
 	paths: Type.Optional(
 		Type.Array(Type.String({ description: "Paths to scan for duplicates" }), {
@@ -276,6 +392,93 @@ export const jscpdSchema = Type.Object({
 		Type.Array(Type.String({ description: "Language format name" }), {
 			description: "Filter by language formats (e.g. ['typescript', 'python'])",
 			examples: [["typescript", "python"]],
+		}),
+	),
+});
+
+export const shellEnhancedSchema = Type.Object({
+	command: Type.String({
+		description:
+			"POSIX shell command to evaluate. Prefer `ls`, `ps`, `env`, `git log`, etc. — the tool enhances these with optional Nushell `| to json` pipelines when `enforceJson` is enabled.",
+		examples: ["ls -la src", 'git status', "env", "pwd"],
+	}),
+	enforceJson: Type.Optional(
+		Type.Boolean({
+			description:
+				"When true (default) and `/nu` exists, wraps known CLI patterns (`ls`, `ps`, `env`, …) in Nushell pipelines that terminate with structured JSON.",
+			default: true,
+		}),
+	),
+	timeout: Type.Optional(
+		Type.Integer({
+			description: "Wall-clock timeout per backend attempt (ms). Applies to Nu, POSIX Bun tier, or bash fallback.",
+			default: 120_000,
+			minimum: 1,
+			maximum: 3_600_000,
+		}),
+	),
+	cwd: Type.Optional(
+		Type.String({
+			description:
+				"Working directory (relative segments resolve against agent workspace cwd; absolute paths are honored verbatim). Default: workspace cwd.",
+		}),
+	),
+	env: Type.Optional(
+		Type.Record(Type.String(), Type.String(), {
+			description:
+				"Extra environment pairs merged into the spawned process (`NU` inherits host env merged with overrides). Values must already be sanitized — no escaping is performed.",
+		}),
+	),
+	fallbackToBun: Type.Optional(
+		Type.Boolean({
+			description:
+				"When true (default), prefer the POSIX fast path spawned via Bun after Nu failures/non-structured output; otherwise fall back straight to `$SHELL`/`bash`-compatible execution.",
+			default: true,
+		}),
+	),
+});
+
+
+export const lsEnhancedSchema = Type.Object({
+	path: Type.Optional(
+		Type.String({
+			description: "Directory to map (defaults to workspace cwd)",
+			examples: ["src", ".", ".."],
+		}),
+	),
+	cwd: Type.Optional(
+		Type.String({
+			description: "Effective workspace root used to resolve relative `path` (defaults to agent workspace cwd)",
+		}),
+	),
+	depth: Type.Optional(
+		Type.Integer({
+			description: "Maximum recursion depth relative to root (1 = immediate children only). Default: 12",
+			default: 12,
+			minimum: 1,
+			maximum: 128,
+		}),
+	),
+	includeHidden: Type.Optional(Type.Boolean({ description: "Include dot-files and dot-directories", default: false })),
+	includeGitStatus: Type.Optional(
+		Type.Boolean({ description: "Attach git statusXY per file when root is inside a repo", default: true }),
+	),
+	filterTypes: Type.Optional(
+		Type.Array(Type.String({ description: "Extension ('ts'), category ('code'), or kind ('directory','symlink')" }), {
+			description:
+				"Filter leaves: omit files that match none (extensions omit leading dot). Categories: code, markup, doc, config, data, unknown. Keep parent dirs that still contain matches.",
+			examples: [["ts", "tsx", "directory"], ["code", "config"]],
+		}),
+	),
+	minSizeBytes: Type.Optional(
+		Type.Integer({ description: "Only include files with size >= min (bytes)", minimum: 0 }),
+	),
+	maxSizeBytes: Type.Optional(Type.Integer({ description: "Only include files with size <= max (bytes)", minimum: 0 })),
+	preferBroot: Type.Optional(
+		Type.Boolean({
+			description:
+				"When broot/br is available, run `:print_tree` first and try to coerce its ASCII tree into the same JSON topology (fallbacks to filesystem scan on parse failure)",
+			default: true,
 		}),
 	),
 });
