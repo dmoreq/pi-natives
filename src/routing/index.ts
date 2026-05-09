@@ -17,6 +17,13 @@ export {
 } from "./context-analyzer";
 export { DecisionEngine } from "./decision-engine";
 export {
+	BUNDLED_TREE_CONFIG,
+	collectTreeTools,
+	DecisionTree,
+	parseTreeConfig,
+} from "./decision-tree";
+export type { TreeTraversalResult } from "./decision-tree";
+export {
 	GUIDELINES_CONFIG,
 	type ToolGuidelineEntry,
 	PromptBuilder,

@@ -1,0 +1,227 @@
+{
+	"version": 1,
+	"root": {
+		"id": "root",
+		"question": "What is the dominant routing intent?",
+		"branches": [
+			{
+				"id": "dup_signal",
+				"priority": 1000,
+				"match": { "featuresAny": ["duplicate-detection"] },
+				"leaf": {
+					"tool": "find_duplicates",
+					"baseConfidence": 0.94,
+					"requiredBinaries": ["jscpd"]
+				}
+			},
+			{
+				"id": "intent_refactor",
+				"priority": 990,
+				"match": { "intent": "refactor" },
+				"leaf": {
+					"tool": "find_duplicates",
+					"baseConfidence": 0.9,
+					"requiredBinaries": ["jscpd"]
+				}
+			},
+			{
+				"id": "intent_count",
+				"priority": 980,
+				"match": { "intent": "count" },
+				"leaf": {
+					"tool": "count_lines",
+					"baseConfidence": 0.93,
+					"requiredBinaries": ["tokei"]
+				}
+			},
+			{
+				"id": "intent_analyze",
+				"priority": 970,
+				"match": { "intent": "analyze" },
+				"branch": {
+					"id": "analyze_route",
+					"question": "Security audit, AST pattern, or general structural scan?",
+					"branches": [
+						{
+							"id": "analyze_security",
+							"priority": 300,
+							"match": { "featuresAny": ["security-audit"] },
+							"leaf": {
+								"tool": "semgrep",
+								"baseConfidence": 0.92,
+								"requiredBinaries": ["semgrep"]
+							}
+						},
+						{
+							"id": "analyze_ast_pattern",
+							"priority": 285,
+							"match": { "patternType": "ast" },
+							"leaf": {
+								"tool": "ast_grep",
+								"baseConfidence": 0.91,
+								"requiredBinaries": ["ast-grep"]
+							}
+						},
+						{
+							"id": "analyze_structural_specificity",
+							"priority": 275,
+							"match": { "specificity": "structural" },
+							"leaf": {
+								"tool": "ast_grep",
+								"baseConfidence": 0.89,
+								"requiredBinaries": ["ast-grep"]
+							}
+						},
+						{
+							"id": "analyze_default_ast",
+							"priority": 100,
+							"match": {},
+							"leaf": {
+								"tool": "ast_grep",
+								"baseConfidence": 0.85,
+								"requiredBinaries": ["ast-grep"]
+							}
+						}
+					],
+					"defaultLeaf": {
+						"tool": "ast_grep",
+						"baseConfidence": 0.82,
+						"requiredBinaries": ["ast-grep"]
+					}
+				}
+			},
+			{
+				"id": "intent_read",
+				"priority": 965,
+				"match": { "intent": "read" },
+				"leaf": {
+					"tool": "read_enhanced",
+					"baseConfidence": 0.92
+				}
+			},
+			{
+				"id": "intent_write",
+				"priority": 962,
+				"match": { "intent": "write" },
+				"leaf": {
+					"tool": "write_enhanced",
+					"baseConfidence": 0.92
+				}
+			},
+			{
+				"id": "intent_edit",
+				"priority": 960,
+				"match": { "intent": "edit" },
+				"leaf": {
+					"tool": "edit_enhanced",
+					"baseConfidence": 0.92
+				}
+			},
+			{
+				"id": "intent_shell",
+				"priority": 955,
+				"match": { "intent": "shell" },
+				"leaf": {
+					"tool": "shell_enhanced",
+					"baseConfidence": 0.93
+				}
+			},
+			{
+				"id": "intent_list",
+				"priority": 950,
+				"match": { "intent": "list" },
+				"leaf": {
+					"tool": "ls_enhanced",
+					"baseConfidence": 0.93
+				}
+			},
+			{
+				"id": "intent_find",
+				"priority": 940,
+				"match": { "intent": "find" },
+				"branch": {
+					"id": "find_route",
+					"question": "Exact listing vs fuzzy filename matching?",
+					"branches": [
+						{
+							"id": "find_fuzzy",
+							"priority": 260,
+							"match": { "specificity": "fuzzy" },
+							"leaf": {
+								"tool": "fuzzy_find",
+								"baseConfidence": 0.9,
+								"requiredBinaries": ["fzf"]
+							}
+						},
+						{
+							"id": "find_exact",
+							"priority": 140,
+							"match": {},
+							"leaf": {
+								"tool": "find_files",
+								"baseConfidence": 0.9,
+								"requiredBinaries": ["fd"]
+							}
+						}
+					],
+					"defaultLeaf": {
+						"tool": "find_files",
+						"baseConfidence": 0.86,
+						"requiredBinaries": ["fd"]
+					}
+				}
+			},
+			{
+				"id": "intent_search",
+				"priority": 930,
+				"match": { "intent": "search" },
+				"branch": {
+					"id": "search_route",
+					"question": "Ripgrep extras, BM25 relevance, or default regex content search?",
+					"branches": [
+						{
+							"id": "search_ripgrep_advanced",
+							"priority": 320,
+							"match": { "featuresAny": ["ripgrep-advanced"] },
+							"leaf": {
+								"tool": "ripgrep",
+								"baseConfidence": 0.91,
+								"requiredBinaries": ["rg"]
+							}
+						},
+						{
+							"id": "search_conceptual",
+							"priority": 290,
+							"match": { "specificity": "conceptual" },
+							"leaf": {
+								"tool": "concept_search",
+								"baseConfidence": 0.9,
+								"requiredBinaries": ["rg"]
+							}
+						},
+						{
+							"id": "search_default_regex",
+							"priority": 120,
+							"match": {},
+							"leaf": {
+								"tool": "search",
+								"baseConfidence": 0.88,
+								"requiredBinaries": ["rg"]
+							}
+						}
+					],
+					"defaultLeaf": {
+						"tool": "search",
+						"baseConfidence": 0.84,
+						"requiredBinaries": ["rg"]
+					}
+				}
+			}
+		],
+		"defaultLeaf": {
+			"tool": "search",
+			"baseConfidence": 0.42,
+			"requiredBinaries": ["rg"]
+		}
+	}
+}
