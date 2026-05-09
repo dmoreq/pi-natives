@@ -4,7 +4,7 @@
  * Allows users to trigger installation of missing binaries on demand.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, AgentToolResult } from "@mariozechner/pi-coding-agent";
 import { BinaryManager, createBinaryRequirements } from "../core/binary-manager";
 import { createAutoInstallConfigs } from "../core/auto-installer";
 
@@ -12,27 +12,38 @@ import { createAutoInstallConfigs } from "../core/auto-installer";
  * Register the install_tools command
  */
 export function registerInstallToolsTool(api: ExtensionAPI, description: string): void {
-	api.registerTool(
-		"install_tools", 
-		description,
-		{
-			binaries: {
-				type: "array",
-				items: { type: "string" },
-				description: "Specific binaries to install. If empty, installs all missing required tools."
-			},
-			required_only: {
-				type: "boolean", 
-				description: "Only install required tools, skip optional ones.",
-				default: false
-			},
-			force: {
-				type: "boolean",
-				description: "Force reinstall even if binary already exists.",
-				default: false  
+	api.registerTool({
+		name: "install_tools",
+		label: "Install Tools",
+		description: description,
+		promptSnippet: "automatically install missing pi-sherlock dependencies with user consent",
+		parameters: {
+			type: "object",
+			properties: {
+				binaries: {
+					type: "array",
+					items: { type: "string" },
+					description: "Specific binaries to install. If empty, installs all missing required tools."
+				},
+				required_only: {
+					type: "boolean", 
+					description: "Only install required tools, skip optional ones.",
+					default: false
+				},
+				force: {
+					type: "boolean",
+					description: "Force reinstall even if binary already exists.",
+					default: false  
+				}
 			}
 		},
-		async (args, context) => {
+		async execute(
+			_toolCallId: string,
+			args: any,
+			signal: AbortSignal | undefined,
+			_onUpdate: any,
+			context: ExtensionContext
+		): Promise<AgentToolResult<any>> {
 			const { binaries = [], required_only = false, force = false } = args;
 			
 			try {
@@ -165,5 +176,5 @@ export function registerInstallToolsTool(api: ExtensionAPI, description: string)
 				};
 			}
 		}
-	);
+	});
 }

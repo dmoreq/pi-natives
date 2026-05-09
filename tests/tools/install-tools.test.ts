@@ -63,29 +63,36 @@ describe("install-tools tool", () => {
 		registerInstallToolsTool(mockApi as any, description);
 		
 		expect(mockApi.registerTool).toHaveBeenCalledWith(
-			"install_tools",
-			description,
 			expect.objectContaining({
-				binaries: expect.objectContaining({
-					type: "array",
-					items: { type: "string" }
+				name: "install_tools",
+				label: "Install Tools",
+				description: description,
+				promptSnippet: "automatically install missing pi-sherlock dependencies with user consent",
+				parameters: expect.objectContaining({
+					type: "object",
+					properties: expect.objectContaining({
+						binaries: expect.objectContaining({
+							type: "array",
+							items: { type: "string" }
+						}),
+						required_only: expect.objectContaining({
+							type: "boolean",
+							default: false
+						}),
+						force: expect.objectContaining({
+							type: "boolean", 
+							default: false
+						})
+					})
 				}),
-				required_only: expect.objectContaining({
-					type: "boolean",
-					default: false
-				}),
-				force: expect.objectContaining({
-					type: "boolean", 
-					default: false
-				})
-			}),
-			expect.any(Function)
+				execute: expect.any(Function)
+			})
 		);
 	});
 	
 	test("should install all missing required tools by default", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		// Mock missing tools
 		mockBinaryManager.getMissingRequirements.mockReturnValue([
@@ -99,7 +106,7 @@ describe("install-tools tool", () => {
 			{ binary: 'fd', success: true, userConsented: true, installTime: 3000 }
 		]);
 		
-		const result = await toolFunction({}, mockContext);
+		const result = await toolFunction("", {}, undefined, undefined, mockContext);
 		
 		expect(mockBinaryManager.installBinaries).toHaveBeenCalledWith(['rg', 'fd'], mockContext);
 		expect(result.success).toBe(true);
@@ -113,14 +120,17 @@ describe("install-tools tool", () => {
 	
 	test("should install specific binaries when provided", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		mockBinaryManager.installBinaries.mockResolvedValue([
 			{ binary: 'semgrep', success: true, userConsented: true, installTime: 10000 }
 		]);
 		
 		const result = await toolFunction(
-			{ binaries: ['semgrep'] },
+			"", 
+			{ binaries: ['semgrep'] }, 
+			undefined, 
+			undefined, 
 			mockContext
 		);
 		
@@ -130,7 +140,7 @@ describe("install-tools tool", () => {
 	
 	test("should handle required_only parameter", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		// Mock missing tools (both required and optional)
 		mockBinaryManager.getMissingRequirements.mockReturnValue([
@@ -143,7 +153,10 @@ describe("install-tools tool", () => {
 		]);
 		
 		const result = await toolFunction(
+			"",
 			{ required_only: true },
+			undefined,
+			undefined, 
 			mockContext
 		);
 		
@@ -154,7 +167,7 @@ describe("install-tools tool", () => {
 	
 	test("should handle force reinstall", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		mockBinaryManager.getMissingRequirements.mockReturnValue([]);
 		mockBinaryManager.installBinaries.mockResolvedValue([
@@ -162,7 +175,10 @@ describe("install-tools tool", () => {
 		]);
 		
 		const result = await toolFunction(
+			"",
 			{ binaries: ['rg'], force: true },
+			undefined,
+			undefined,
 			mockContext
 		);
 		
@@ -173,11 +189,11 @@ describe("install-tools tool", () => {
 	
 	test("should return success when all tools already installed", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		mockBinaryManager.getMissingRequirements.mockReturnValue([]);
 		
-		const result = await toolFunction({}, mockContext);
+		const result = await toolFunction("", {}, undefined, undefined, mockContext);
 		
 		expect(result.success).toBe(true);
 		expect(result.message).toContain("All tools are already installed!");
@@ -187,7 +203,7 @@ describe("install-tools tool", () => {
 	
 	test("should handle installation failures", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		mockBinaryManager.getMissingRequirements.mockReturnValue([
 			{ binary: 'rg', label: 'ripgrep', installCommand: 'brew install ripgrep', required: true }
@@ -198,7 +214,7 @@ describe("install-tools tool", () => {
 			{ binary: 'rg', success: false, userConsented: true, error: 'Package not found', installTime: 2000 }
 		]);
 		
-		const result = await toolFunction({}, mockContext);
+		const result = await toolFunction("", {}, undefined, undefined, mockContext);
 		
 		expect(result.success).toBe(false);
 		expect(result.failed).toHaveLength(1);
@@ -211,7 +227,7 @@ describe("install-tools tool", () => {
 	
 	test("should handle user declined installations", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		mockBinaryManager.getMissingRequirements.mockReturnValue([
 			{ binary: 'rg', label: 'ripgrep', installCommand: 'brew install ripgrep', required: true }
@@ -222,7 +238,7 @@ describe("install-tools tool", () => {
 			{ binary: 'rg', success: false, userConsented: false, installTime: 100 }
 		]);
 		
-		const result = await toolFunction({}, mockContext);
+		const result = await toolFunction("", {}, undefined, undefined, mockContext);
 		
 		expect(result.skipped).toEqual(['rg']);
 		expect(result.message).toContain("⏭️ Skipped (1)");
@@ -230,7 +246,7 @@ describe("install-tools tool", () => {
 	
 	test("should provide comprehensive installation statistics", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		mockBinaryManager.getMissingRequirements.mockReturnValue([
 			{ binary: 'rg', label: 'ripgrep', installCommand: 'brew install ripgrep', required: true }
@@ -240,7 +256,7 @@ describe("install-tools tool", () => {
 			{ binary: 'rg', success: true, userConsented: true, installTime: 5000 }
 		]);
 		
-		const result = await toolFunction({}, mockContext);
+		const result = await toolFunction("", {}, undefined, undefined, mockContext);
 		
 		expect(result.stats).toBeDefined();
 		expect(result.stats.totalAttempted).toBe(1);
@@ -251,13 +267,16 @@ describe("install-tools tool", () => {
 	
 	test("should handle installation errors gracefully", async () => {
 		registerInstallToolsTool(mockApi as any, "test");
-		const toolFunction = mockApi.registerTool.mock.calls[0][3];
+		const toolFunction = mockApi.registerTool.mock.calls[0][0].execute;
 		
 		// Mock an error during installation
 		mockBinaryManager.installBinaries.mockRejectedValue(new Error("Network error"));
 		
 		const result = await toolFunction(
+			"",
 			{ binaries: ['rg'] },
+			undefined,
+			undefined,
 			mockContext
 		);
 		
