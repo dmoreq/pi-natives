@@ -26,7 +26,22 @@
 	],
 	"pi": {
 		"extensions": ["./src/plugin.ts"],
-		"skills": ["./skills/pi-sherlock", "./skills/pi-sherlock-semgrep", "./skills/pi-sherlock-fzf", "./skills/pi-sherlock-fd", "./skills/pi-sherlock-ripgrep", "./skills/pi-sherlock-ast-grep", "./skills/pi-sherlock-tokei", "./skills/pi-sherlock-jscpd"]
+		"skills": [
+			"./skills/pi-sherlock",
+			"./skills/pi-sherlock-search",
+			"./skills/pi-sherlock-concept-search",
+			"./skills/pi-sherlock-ripgrep",
+			"./skills/pi-sherlock-semgrep",
+			"./skills/pi-sherlock-fzf",
+			"./skills/pi-sherlock-fd",
+			"./skills/pi-sherlock-ast-grep",
+			"./skills/pi-sherlock-tokei",
+			"./skills/pi-sherlock-jscpd",
+			"./skills/pi-sherlock-read-enhanced",
+			"./skills/pi-sherlock-edit-enhanced",
+			"./skills/pi-sherlock-shell-enhanced",
+			"./skills/pi-sherlock-ls-enhanced"
+		]
 	},
 	"scripts": {
 		"test": "bun test tests/"
