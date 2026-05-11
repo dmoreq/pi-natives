@@ -417,11 +417,11 @@ describe("NushellJsonExecutor fallback chain", () => {
 describe("runBunShellViaBunDollar Bun dollar shell tier", () => {
 	test("runs user command fragments through the Bun shell", async () => {
 		const r = await runBunShellViaBunDollar(
-			process.platform === "win32" ? "echo bun-dollar-win" : "printf %s 'bun-dollar-unix'",
+			"echo bun-dollar-test",
 			{},
 		);
 		expect(r.code).toBe(0);
-		expect(r.stdout).toContain("bun-dollar");
+		expect(r.stdout).toContain("bun-dollar-test");
 	});
 });
 
