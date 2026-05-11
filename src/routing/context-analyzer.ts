@@ -172,8 +172,27 @@ export class ContextAnalyzer {
 	private detectRequiredFeatures(query: string): string[] {
 		const feats: string[] = [];
 		const q = query;
-		if (/multiline|^\s*-U\b|--multiline|^rg\s+|hidden\s+files|--hidden|--no-ignore|count.?only|^count\b|-c\b/i.test(q))
+		
+		// Enhanced ripgrep detection
+		const ripgrepSignals = [
+			/multiline|^\s*-U\b|--multiline|^rg\s+/i,
+			/hidden\s+files?|--hidden/i,
+			/--no-ignore|skip.*ignored/i,
+			/count.?only|--count|^count\b|-c\b|match.*(density|frequency|count)/i,
+			/--files-with-matches|files.*matching/i,
+			/fixed.?string|--fixed-strings/i,
+			/column\s+limit|--max-columns/i,
+			/timeout|performance/i,
+		];
+		
+		if (ripgrepSignals.some(sig => sig.test(q))) {
 			feats.push("ripgrep-advanced");
+			// Also add specific feature types for more granular routing
+			if (/multiline|--multiline/i.test(q)) feats.push("multiline");
+			if (/hidden|--hidden/i.test(q)) feats.push("hidden");
+			if (/count|--count|match.*(density|frequency)/i.test(q)) feats.push("count");
+			if (/performance|speed|optimize|fast/i.test(q)) feats.push("performance");
+		}
 		if (/security|Owasp|SAST\b|CVE\b|\bSemgrep\b|vulnerabilit/i.test(q)) feats.push("security-audit");
 		if (/duplicate|jscpd|copy.?paste|clone(d)?\s+block/i.test(q)) feats.push("duplicate-detection");
 		if (/smart\b|structured\s+json|^json\b|^nu\b|\bnushell\b|\bshell_enhanced\b/i.test(q)) feats.push("structured-shell");

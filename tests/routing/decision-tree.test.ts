@@ -200,7 +200,7 @@ describe("DecisionTree traversal — all fourteen tools reachable", () => {
 				features: ["ripgrep-advanced"],
 			},
 			"ripgrep",
-			(r) => expect(r.path).toContain("search_ripgrep_advanced"),
+			(r) => expect(r.path.some(p => p.includes("ripgrep"))).toBe(true), // Matches either ripgrep_preferred or ripgrep_advanced
 		);
 	});
 

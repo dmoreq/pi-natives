@@ -21,7 +21,7 @@ export async function spawnAstGrepRewrite(opts: AstGrepSpawnOpts): Promise<AstGr
 		throw new AstEditError("ast-grep binary not found in PATH");
 	}
 	
-	const args = ["--rewrite", pattern, "--rewrite-to", replacement];
+	const args = ["run", "--pattern", pattern, "--rewrite", replacement];
 	
 	if (language) {
 		args.push("--lang", language);
@@ -66,7 +66,7 @@ export async function spawnAstGrepScan(opts: AstGrepSpawnOpts): Promise<AstGrepS
 		throw new AstEditError("ast-grep binary not found in PATH");
 	}
 	
-	const args = ["--json", pattern];
+	const args = ["run", "--pattern", pattern, "--json=compact"];
 	
 	if (language) {
 		args.push("--lang", language);
@@ -116,12 +116,19 @@ export function parseAstGrepMatches(stdout: string): AstChange[] {
 			return [];
 		}
 		
-		return matches.map((match: any) => ({
-			line: match.range?.start?.line || 0,
-			column: match.range?.start?.column || 0,
-			before: match.text || "",
-			after: "" // Will be filled in by replacement logic
-		}));
+		return matches.map((match: any) => {
+			// ast-grep 0.42+ format
+			const startLine = match.range?.start?.line ?? 0;
+			const startCol = match.range?.start?.column ?? 0;
+			const text = match.text || match.lines || "";
+			
+			return {
+				line: startLine,
+				column: startCol,
+				before: text,
+				after: "" // Will be filled in by replacement logic
+			};
+		});
 		
 	} catch (error) {
 		// If JSON parsing fails, return empty array

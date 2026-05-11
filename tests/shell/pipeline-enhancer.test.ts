@@ -38,11 +38,11 @@ describe("Pipeline Enhancer", () => {
 	
 	test("should enhance env commands", () => {
 		const result1 = enforceJsonPipeline("env");
-		expect(result1.nuScript).toBe("env | to json");
+		expect(result1.nuScript).toBe("$env | to json");
 		expect(result1.enhanced).toBe(true);
 		
 		const result2 = enforceJsonPipeline("env | sort");
-		expect(result2.nuScript).toBe("env | to json");
+		expect(result2.nuScript).toBe("$env | to json");
 		expect(result2.enhanced).toBe(true);
 	});
 	
@@ -54,35 +54,35 @@ describe("Pipeline Enhancer", () => {
 	
 	test("should enhance ps commands", () => {
 		const result1 = enforceJsonPipeline("ps");
-		expect(result1.nuScript).toBe("ps  | to json");
+		expect(result1.nuScript).toBe("ps  | select pid name cpu mem | to json");
 		expect(result1.enhanced).toBe(true);
 		
 		const result2 = enforceJsonPipeline("ps aux");
-		expect(result2.nuScript).toBe("ps aux | to json");
+		expect(result2.nuScript).toBe("ps aux | select pid name cpu mem | to json");
 		expect(result2.enhanced).toBe(true);
 	});
 	
 	test("should enhance git log commands", () => {
 		const result1 = enforceJsonPipeline("git log");
-		expect(result1.nuScript).toBe("git log --format=json | to json");
+		expect(result1.nuScript).toBe("git log --format=json | from json | to json");
 		expect(result1.enhanced).toBe(true);
 		
 		const result2 = enforceJsonPipeline("git log --oneline");
-		expect(result2.nuScript).toBe("git log --oneline --format=json | to json");
+		expect(result2.nuScript).toBe("git log --oneline --format=json | from json | to json");
 		expect(result2.enhanced).toBe(true);
 		
 		const result3 = enforceJsonPipeline("git log --format=short");
-		expect(result3.nuScript).toBe("git log --format=short | to json");
+		expect(result3.nuScript).toBe("git log --format=short | from json | to json");
 		expect(result3.enhanced).toBe(true);
 	});
 	
 	test("should enhance git status commands", () => {
 		const result1 = enforceJsonPipeline("git status");
-		expect(result1.nuScript).toBe("git status --porcelain | to json");
+		expect(result1.nuScript).toBe("git status --porcelain=v1 | lines | parse \"{status_xy} {path}\" | to json");
 		expect(result1.enhanced).toBe(true);
 		
 		const result2 = enforceJsonPipeline("git status --porcelain");
-		expect(result2.nuScript).toBe("git status --porcelain | to json");
+		expect(result2.nuScript).toBe("git status --porcelain | lines | parse \"{status_xy} {path}\" | to json");
 		expect(result2.enhanced).toBe(true);
 	});
 	

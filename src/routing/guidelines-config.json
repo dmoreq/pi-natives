@@ -1,27 +1,29 @@
 {
 	"tools": {
 		"search": {
-			"primaryUse": "Default regex-based search of file contents (ripgrep engine), gitignore-aware, structured match output.",
+			"primaryUse": "Basic regex-based search fallback (ripgrep engine), gitignore-aware, for simple single-line patterns. For advanced features, prefer ripgrep.",
 			"triggers": [
-				"You have a precise pattern to find in source text (identifier, TODO, error string, signature fragment).",
-				"You want line-anchored matches with optional glob/type filters without advanced ripgrep-only knobs.",
+				"You have a precise single-line pattern (identifier, TODO, error string, signature fragment).",
+				"You want simple line-anchored matches without advanced ripgrep flags.",
 				"You are pairing with find_files/fuzzy_find: discover paths first, then search contents here."
 			],
 			"avoid": [
+				"Multiline patterns → ripgrep (with --multiline).",
+				"Match counting, statistics, density analysis → ripgrep (with --count).",
+				"Hidden files or dotfiles → ripgrep (with --hidden).",
 				"Conceptual / natural-language discovery → concept_search.",
-				"Multiline-regex, hidden files, per-file counts, fixed-strings-at-scale → ripgrep.",
-				"Ast metavariable or structural refactor patterns → ast_grep; security/rule packs → semgrep.",
-				"Filename or path discovery only → find_files or fuzzy_find (not content)."
+				"Structural patterns → ast_grep; security rules → semgrep."
 			],
 			"critical": [
-				"This is the default content-search tool — do not shell out to grep, rg, ag, or ack.",
-				"Prefer search over ripgrep for ordinary content searches.",
-				"Prefer search over concept_search when you can state an exact regex (or trivial literal)."
+				"search is SECONDARY to ripgrep for content discovery.",
+				"Use ripgrep when you need: multiline, count, hidden, or advanced flags.",
+				"Prefer ripgrep for performance-sensitive operations.",
+				"Do not shell out to grep, rg, ag, or ack."
 			],
 			"examples": [
-				"Pattern \\bauthenticate\\(.*\\)",
-				"TODO|FIXME across *.ts via glob/type",
-				"Exception class name after narrowing with find_files"
+				"Simple pattern: \\bauthenticate\\(.*\\) (basic regex)",
+				"TODO comments: TODO|FIXME across *.ts (single-line only)",
+				"Class names: ^class\\s+\\w+Error$ in errors/ (line-anchored)"
 			]
 		},
 		"concept_search": {
@@ -47,25 +49,31 @@
 			]
 		},
 		"ripgrep": {
-			"primaryUse": "Advanced ripgrep surface: multiline, count/files-with-matches modes, hidden paths, ignoring gitignore, timeouts, optional fixed strings.",
+			"primaryUse": "PRIMARY advanced ripgrep for multiline patterns, match counting, hidden file scanning, and performance-critical operations. Use ripgrep when you need advanced flags beyond basic regex.",
 			"triggers": [
-				"You need multiline patterns or match-count-per-file / files-with-matches listing.",
-				"You must scan hidden paths or deliberately bypass ignore rules (use carefully).",
-				"You need knobs not exposed on search (timeouts, fixedStrings, column limits)."
+				"You need multiline patterns (config files, templates, multi-statement code blocks).",
+				"You need match counts per file or files-with-matches listing (statistics, frequency analysis).",
+				"You need to scan hidden paths or bypass .gitignore (dotfiles, configuration discovery).",
+				"You need performance optimization (timeouts, column limits, fixed strings).",
+				"You're analyzing pattern density or match statistics across files."
 			],
 			"avoid": [
-				"Standard single-line content search → search.",
+				"Simple single-line searches on default paths → use search for basic regex.",
 				"Semantic / AST structure → semgrep or ast_grep.",
-				"Path listing by glob/name → find_files; approximate paths → fuzzy_find."
+				"Path discovery by name → find_files; fuzzy filename matching → fuzzy_find."
 			],
 			"critical": [
-				"Reach for ripgrep only when search parameters are insufficient — keep defaults on search.",
+				"PREFER ripgrep for anything beyond basic regex searching.",
+				"ripgrep is now PRIORITIZED over 'search' for advanced features (multiline, count, hidden).",
+				"Ripgrep is the power tool for performance-sensitive operations.",
 				"Combining unsafe flags (noIgnore + hidden) can surface secrets; minimize scope."
 			],
 			"examples": [
-				"multiline: true across config templates",
-				"mode: count to compare hit density per file",
-				"mode: filesWithMatches for a coarse file set before search"
+				"Find multiline patterns: --multiline '[section][\\s\\S]*?[/section]' config/",
+				"Count error frequency: --count 'ERROR|WARN' --type log logs/",
+				"Scan hidden dotfiles: --hidden '.env' (bypass .gitignore by default)",
+				"High-performance scanning: --max-columns 200 --timeout 2000 huge.log",
+				"Match statistics: --files-with-matches 'pattern' src/ | wc -l"
 			]
 		},
 		"find_files": {
