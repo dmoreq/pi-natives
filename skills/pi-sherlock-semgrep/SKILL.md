@@ -5,52 +5,84 @@ description: AST-aware static analysis and pattern-based code search using Semgr
 
 # pi-sherlock-semgrep: AST-Aware Code Analysis
 
-**Trigger:** You need to match CODE STRUCTURE (function calls, class definitions, control flow) that regex CANNOT reliably match.
+**Trigger:** Match CODE STRUCTURE (function calls, control flow, class definitions) that regex cannot reliably match, OR run security/quality rule packs across a codebase.
 
-This skill provides AST-aware code search and static analysis powered by [Semgrep](https://semgrep.dev/). Unlike regex, Semgrep understands language syntax.
-
-## Tool
-
-### `semgrep` — Code Structure Analysis
-
-**The single rule:** If your pattern involves code structure (function calls, classes, control flow), use `semgrep`. If it's a simple text string, use `search`.
+## When to use semgrep
 
 | Pattern | Tool | Why |
-|---|---|---|
-| `eval(...)` | **semgrep** | Function call — AST knows structure |
-| `$X == $X` | **semgrep** | Self-comparison — AST tracks variables |
-| `$F(...)` → `$F.new(...)` | **semgrep** | Method call pattern |
-| `TODO` | `search` | Simple text string |
-| `function\s+\w+` | `search` | Regex pattern for text |
-| `authentication` | `concept_search` | Conceptual, not structural |
+|---------|------|-----|
+| `eval(...)` | **`semgrep`** | Function call — AST-aware |
+| `$X == $X` | **`semgrep`** | Self-comparison — AST tracks vars |
+| Hardcoded secrets | **`semgrep`** with `config: "p/secrets"` | Rule pack |
+| SQL injection | **`semgrep`** with `config: "p/r2c-security-audit"` | Rule pack |
+| `TODO` | `search` | Plain text |
+| `function\s+\w+` | `search` | Regex pattern |
+| "where is auth handled?" | `concept_search` | Conceptual |
+| Find + rewrite a pattern | `ast_grep` | Structural refactor |
 
-**Two modes:**
+## Two Modes
 
-| Mode | Usage | Example |
-|------|-------|---------|
-| **Pattern** | `semgrep -pattern "eval(...)" -language ts` | Find all `eval()` calls |
-| **Config** | `semgrep -config p/r2c-security-audit` | Run security audit rules |
+### Pattern mode — ad-hoc structural search
+```
+pattern: "eval(...)"
+language: "ts"
+severity: "WARNING"    # optional filter: ERROR | WARNING | INFO
+```
 
-**Key features:**
-- Understands code structure (functions, classes, control flow)
-- All major languages: TypeScript, Python, Java, Go, Rust, etc.
-- Predefined rule packs for security, best practices, secrets
-- Filter by severity: ERROR, WARNING, INFO
+### Config mode — predefined rule packs
+```
+config: "auto"                    # auto-detect language, run relevant rules
+config: "p/default"               # curated default rules
+config: "p/secrets"               # hardcoded credentials, tokens, keys
+config: "p/r2c-security-audit"    # OWASP, injection, path traversal, XSS
+config: "p/owasp-top-ten"         # OWASP Top 10
+config: "p/javascript"            # JS/TS best practices
+config: "p/python"                # Python best practices
+config: "./rules/"                # path to local rule YAML files
+```
 
-**Do NOT use for:**
-- Simple text/string matching → use `search`
-- Concept-based file discovery → use `concept_search`
-- Filename search → use `fzf` or `fd`
+## Semgrep 1.157 Capabilities
+
+### `scan` — main analysis command (what the `semgrep` tool uses)
+- **`--autofix`** — automatically apply suggested fixes when rules define a `fix` clause.
+- **`--dryrun`** — preview autofixes without writing to disk.
+- **`--incremental`** — only scan files changed since last scan (requires `--experimental`).
+- **`--exclude` / `--include`** — glob patterns to filter scanned files.
+- **`--severity ERROR`** — filter output to only show findings at or above a level.
+- **`--json`** — machine-readable output (use with `shell_enhanced` for pipelines).
+
+### `mcp` — Model Context Protocol server
+Semgrep can run as an MCP server for AI agent integration:
+```bash
+semgrep mcp
+```
+Enables real-time rule evaluation from AI agent tooling.
+
+### `ci` — CI/CD mode
+Scans only git-diff changes (for PRs / merge requests):
+```bash
+semgrep ci --config auto
+```
+
+### Severity levels
+`ERROR` > `WARNING` > `INFO` — use `severity: "ERROR"` to reduce noise in large codebases.
 
 ## Guidelines
 
-1. Always specify `language` when using a `pattern`
-2. Use `config: "auto"` for quick scans, `"p/r2c-security-audit"` for security
-3. Pair with `search` for deeper investigation of findings
-4. Start broad (INFO) and narrow as needed
+1. Always specify `language` when using a `pattern`.
+2. Start with `config: "auto"` for a quick scan; narrow to specific packs for deep audits.
+3. Use `severity: "ERROR"` to cut noise; expand to `"INFO"` to see everything.
+4. Combine: `semgrep` finds the vulnerability, `search` verifies all call sites.
+5. Use `--autofix` + `--dryrun` first, then re-run without `--dryrun` to apply.
+6. For team enforcement, store rules as YAML in `./rules/` and run `config: "./rules/"`.
 
-## Output Size Validation
+## Do NOT use for
 
-All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
-before returning to the agent. A diagnostic note is appended when truncation occurs.
-This ensures token limits are respected regardless of result size.
+- Simple text / string matching → `search`
+- Concept-based file discovery → `concept_search`
+- Filename search → `find_files` or `fuzzy_find`
+- Structural refactoring → `ast_grep`
+
+## Output
+
+All outputs are truncated to **200 lines / 10 000 chars**. For large audits, use `severity: "ERROR"` first, or pipe `--json` output via `shell_enhanced` for full results.

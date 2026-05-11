@@ -7,42 +7,62 @@ description: Fuzzy file path search powered by fzf — find files when you only 
 
 **Trigger:** You sort-of know the file name but not the exact path. Query terms can be in any order and don't need to be contiguous.
 
-This skill provides fuzzy file PATH searching (NOT content search) powered by [fzf](https://github.com/junegunn/fzf).
+## Tool Selection
 
-## Tool
+```
+Approximate / mistyped filename?  → fuzzy_find  (fzf)
+Exact name, extension, or glob?   → find_files  (fd)
+File CONTENTS?                    → search      (ripgrep)
+Conceptual / topical discovery?   → concept_search
+```
 
-### `fzf` — Fuzzy Path Search
+## How Fuzzy Matching Works
 
-**The single rule:** Use `fzf` when you have APPROXIMATE file names and need fuzzy matching. Use `fd` when you know the exact name/extension. Use `search` for file CONTENTS.
+fzf scores paths by how closely query tokens appear (in order but non-contiguous) in the full relative path:
 
-| Intent | Tool |
-|---|---|
-| "I think there's a file called auth... something" | **`fzf`** |
-| "Find all .ts files in src/" | `fd` |
-| "Search for 'TODO' in file contents" | `search` |
-| "Find files about authentication" | `concept_search` |
+```
+query: "auth mid"  →  matches: src/auth/middleware.ts  ✓
+query: "user rep"  →  matches: packages/user/repository.ts  ✓
+query: "mig sql"   →  matches: db/migrations/0001_init.sql  ✓
+```
 
-**Key features:**
-- Fuzzy matching: `"auth mid"` matches `"src/auth/middleware.ts"`
-- Query terms in any order, don't need contiguous
-- Glob filtering for file types
-- Results are file PATHS (not contents)
+## Feature Reference
 
-**Do NOT use for:**
-- Searching file CONTENTS → use `search`
-- Exact filename/extension matching → use `fd`
-- Conceptual/relevance search → use `concept_search`
-- Code structure matching → use `semgrep`
+| Parameter | Effect |
+|-----------|--------|
+| `query` | Fuzzy terms (space-separated, any order) |
+| `path` | Restrict search to this directory |
+| `glob` | Filter by filename pattern (e.g. `"*.ts"`) |
+| `limit` | Max results returned (default: 20) |
+
+## fzf 0.72 Highlights
+
+- **`--scheme=path`** — scoring scheme optimized for file paths (prioritizes path-component boundaries). This is implicitly the right scheme for file searches.
+- **`--scheme=history`** — recency-weighted scoring for command history.
+- **`--tiebreak`** — when scores are tied, sort by `length`, `chunk`, `pathname`, `begin`, `end`, or `index`.
+- **`--style=full`** — richer UI with borders and labels (interactive mode via `shell_enhanced`).
+- **`--popup` / `--tmux`** — spawn fzf in a tmux popup window (requires tmux 3.3+).
+- **`--accept-nth`** — control which fields are printed on selection.
+- **`--wrap`** — line wrapping for long paths.
+
+For interactive selection UI, use `shell_enhanced` with raw `fzf` invocation.
 
 ## Guidelines
 
-1. Query terms are fuzzy-matched against the FULL relative path
-2. Use `path` to narrow search to a subdirectory
-3. Combine `glob` with path filtering for targeted discovery
-4. Pair with `search`: fzf to find the file, search to grep its contents
+1. Query tokens match against the FULL relative path — include directory names for narrowing.
+2. Use `path` to restrict scope: `path: "src/"` + `query: "middleware"`.
+3. Use `glob` for type filtering: `glob: "*.ts"` with a fuzzy name query.
+4. Results are paths only — follow with `search` or `read_enhanced` to inspect content.
+5. Empty query returns ALL files (up to `limit`) — useful for exploration.
+6. For interactive fuzzy selection (e.g. pick from a list), use `shell_enhanced` + raw `fzf`.
 
-## Output Size Validation
+## Do NOT use for
 
-All pi-sherlock tools automatically truncate outputs to 200 lines / 10,000 characters
-before returning to the agent. A diagnostic note is appended when truncation occurs.
-This ensures token limits are respected regardless of result size.
+- Searching file CONTENTS → `search`
+- Exact filename / extension matching → `find_files`
+- Conceptual / relevance-ranked content → `concept_search`
+- Code structure matching → `semgrep` or `ast_grep`
+
+## Output
+
+A list of matched file paths, one per line. Truncated to **200 lines / 10 000 chars**. Increase `limit` or narrow scope with `path`/`glob`.
