@@ -65,7 +65,8 @@ import { registerLsEnhancedTool } from "./tools/ls-enhanced";
 // ── Load prompt descriptions at import time ─────────────────────────
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const searchDescription   = readFileSync(path.resolve(__dirname, "..", "prompts", "search.md"), "utf-8");
+const searchDescription       = readFileSync(path.resolve(__dirname, "..", "prompts", "search.md"), "utf-8");
+const conceptSearchDescription = readFileSync(path.resolve(__dirname, "..", "prompts", "concept-search.md"), "utf-8");
 const semgrepDescription  = readFileSync(path.resolve(__dirname, "..", "prompts", "semgrep.md"), "utf-8");
 const fzfDescription      = readFileSync(path.resolve(__dirname, "..", "prompts", "fzf.md"), "utf-8");
 const fdDescription       = readFileSync(path.resolve(__dirname, "..", "prompts", "fd.md"), "utf-8");
@@ -137,7 +138,7 @@ export default function piSherlockExtension(pi: ExtensionAPI) {
 
 	// Register all tools
 	registerSearchTool(pi, searchDescription);
-	registerBm25Tool(pi);
+	registerBm25Tool(pi, conceptSearchDescription);
 	registerSemgrepTool(pi, semgrepDescription);
 	registerFzfTool(pi, fzfDescription);
 	registerFdTool(pi, fdDescription);

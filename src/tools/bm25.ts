@@ -20,11 +20,11 @@ import { collectFilesWithContent } from "../shared/fs";
 import { GrepError } from "../shared/errors";
 import { PromptBuilder } from "../routing/prompt-builder";
 
-export function registerBm25Tool(pi: ExtensionAPI) {
+export function registerBm25Tool(pi: ExtensionAPI, conceptSearchDescription?: string) {
 	pi.registerTool({
 		name: "concept_search",
 		label: "Concept Search (BM25)",
-		description: "Relevance-ranked file content search using BM25. Use for open-ended or conceptual queries.",
+		description: conceptSearchDescription ?? "Relevance-ranked file content search using BM25. Use for open-ended or conceptual queries.",
 		promptSnippet: "search file content by relevance (BM25 ranking) — for conceptual discovery, not exact patterns",
 		promptGuidelines: PromptBuilder.guidelinesFor("concept_search"),
 		parameters: bm25Schema,
