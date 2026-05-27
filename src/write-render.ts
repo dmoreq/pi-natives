@@ -48,6 +48,20 @@ const writeEnhancedResultConfig: ResultRenderConfig<WriteEnhancedDetails> = {
 			d.backupPath ? "backup" : "",
 		].filter(Boolean),
 	getIcon: _d => ICONS.success,
+	getSummary: d =>
+		`Wrote ${d.bytesWritten} byte${d.bytesWritten !== 1 ? "s" : ""} to ${d.path} using ${d.atomic ? "atomic" : "direct"} write mode.`,
+	getHighlights: d => [
+		`target: ${d.path}`,
+		`method: ${d.method}`,
+		d.backupPath ? `backup created: ${d.backupPath}` : "backup not requested or not created",
+	],
+	getEvidence: d => [
+		`resolved path: ${d.resolvedPath}`,
+		`write time: ${d.writeTime.toFixed(3)} ms`,
+		`atomic write: ${d.atomic ? "yes" : "no"}`,
+	],
+	getRaw: d => formatWriteEnhancedBlock(d, d.path),
+	rawLabel: "Write details",
 };
 
 export function renderWriteEnhancedCall(

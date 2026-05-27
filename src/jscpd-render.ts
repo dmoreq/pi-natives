@@ -8,6 +8,7 @@ import {
 	ICONS,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 
@@ -66,6 +67,13 @@ const jscpdResultConfig: ResultRenderConfig<JscpdDetectDetails> = {
 		return meta;
 	},
 	getIcon: d => d.totalClones > 0 ? ICONS.warning : ICONS.success,
+	getSummary: d =>
+		d.totalClones > 0
+			? `Detected ${d.totalClones} duplicate clone${d.totalClones !== 1 ? "s" : ""} covering ${d.totalDuplicatedLines} duplicated line${d.totalDuplicatedLines !== 1 ? "s" : ""} (${d.percentage.toFixed(1)}%).`
+			: `Checked ${d.totalSources} source file${d.totalSources !== 1 ? "s" : ""}; no duplicated code was found.`,
+	getHighlights: d => firstLines(d.result, 10),
+	getRaw: d => d.result,
+	rawLabel: "Duplicate report",
 };
 
 export function renderJscpdResult(

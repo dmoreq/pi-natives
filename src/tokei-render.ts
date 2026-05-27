@@ -8,6 +8,7 @@ import {
 	ICONS,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 
@@ -64,6 +65,11 @@ const tokeiResultConfig: ResultRenderConfig<TokeiCountDetails> = {
 		`${d.totalLines} line${d.totalLines !== 1 ? "s" : ""} (${d.totalCode} code, ${d.totalComments} comment${d.totalComments !== 1 ? "s" : ""}, ${d.totalBlanks} blank${d.totalBlanks !== 1 ? "s" : ""})`,
 	],
 	getIcon: _d => ICONS.success,
+	getSummary: d =>
+		`Counted ${d.totalLines} line${d.totalLines !== 1 ? "s" : ""} across ${d.totalFiles} file${d.totalFiles !== 1 ? "s" : ""} and ${d.languageCount} language${d.languageCount !== 1 ? "s" : ""}.`,
+	getHighlights: d => firstLines(d.result, 10),
+	getRaw: d => d.result,
+	rawLabel: "Line count table",
 };
 
 export function renderTokeiResult(

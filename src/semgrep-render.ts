@@ -9,6 +9,7 @@ import {
 	line,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 import type { SemgrepSeverity } from "./semgrep";
@@ -81,6 +82,11 @@ const semgrepResultConfig: ResultRenderConfig<SemgrepScanDetails> = {
 		const modeLabel = d.mode === "pattern" ? "Pattern" : d.mode === "config" ? "Config" : "Auto";
 		return `Semgrep (${modeLabel})`;
 	},
+	getSummary: d =>
+		`Scanned ${d.filesScanned} file${d.filesScanned !== 1 ? "s" : ""} with Semgrep and found ${d.matchCount} finding${d.matchCount !== 1 ? "s" : ""} in ${d.fileCount} file${d.fileCount !== 1 ? "s" : ""}.`,
+	getHighlights: d => firstLines(d.result, 8),
+	getRaw: d => d.result,
+	rawLabel: "Semgrep findings",
 	colorResult: (d, theme) => {
 		const color = d.matchCount > 10 ? "error" : d.matchCount > 0 ? "warning" : "success";
 		return theme.fg(color as any, d.result);

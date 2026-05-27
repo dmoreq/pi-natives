@@ -33,6 +33,11 @@ coverage/
 .pi/plans/
 .pi/logs/
 .pi/artifacts/
+.pi/tasks/
+.pi/scope/
+.pi/pi-scope/
+.pi/workflows/
+.pi-cache/
 report/
 .worktrees/
 

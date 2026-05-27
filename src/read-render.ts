@@ -10,6 +10,7 @@ import {
 	ICONS,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared.ts";
 
@@ -65,6 +66,22 @@ const readEnhancedResultConfig: ResultRenderConfig<ReadEnhancedDetails> = {
 		return meta;
 	},
 	getIcon: _d => ICONS.success,
+	getSummary: d =>
+		`Read ${d.path} as ${d.fileType}${d.dataFormat ? `/${d.dataFormat}` : ""} using ${d.method}; estimated size is ~${d.estimatedTokens} tokens.`,
+	getHighlights: d => {
+		const body = d.result.split("\n---\n").slice(1).join("\n---\n");
+		const preview = firstLines(body, 8);
+		return preview.length > 0 ? preview : ["File was empty or produced no readable preview."];
+	},
+	getEvidence: d => [
+		`file size: ${d.fileSizeBytes} bytes`,
+		`read time: ${d.readTimeMs} ms`,
+		d.codeLanguage ? `code language: ${d.codeLanguage}` : "",
+		d.dataFormat ? `data format: ${d.dataFormat}` : "",
+	].filter(Boolean),
+	getDiagnostics: d => d.fallbacks.map(f => `fallback used: ${f}`),
+	getRaw: d => d.result,
+	rawLabel: "Full read payload",
 };
 
 export function renderReadEnhancedCall(

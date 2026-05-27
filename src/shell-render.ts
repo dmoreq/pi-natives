@@ -6,7 +6,7 @@ import { Text } from "@mariozechner/pi-tui";
 import type { Component } from "@mariozechner/pi-tui";
 
 import type { NushellJsonResult } from "./nushell-json.ts";
-import { ICONS, statusLine, renderResult, type ResultRenderConfig } from "./render-shared.ts";
+import { ICONS, statusLine, renderResult, firstLines, type ResultRenderConfig } from "./render-shared.ts";
 
 export interface ShellEnhancedParams {
 	command: string;
@@ -85,7 +85,30 @@ const shellEnhancedResultConfig: ResultRenderConfig<ShellEnhancedDetails> = {
 			`${d.performance.executionTime.toFixed(1)} ms`,
 		].filter(Boolean),
 	getIcon: d => (d.exitCode === 0 ? ICONS.success : ICONS.warning),
+	getSummary: d =>
+		`Ran command with ${d.exitCode === 0 ? "successful" : "non-zero"} exit ${d.exitCode}; output was ${d.structured ? "interpreted as structured data" : "kept as text"}.`,
+	getHighlights: d => shellHighlights(d),
+	getEvidence: d => [
+		`cwd: ${d.resolvedCwd ?? "(current workspace)"}`,
+		`shell: ${d.shell}`,
+		`startup: ${d.performance.startupTime.toFixed(1)} ms`,
+		`execution: ${d.performance.executionTime.toFixed(1)} ms`,
+	],
+	getDiagnostics: d => {
+		const stderr = stderrFromOutput(d.output);
+		return stderr?.trim() ? [`stderr: ${stderr.trim()}`] : [];
+	},
+	getRaw: d => formatShellEnhancedBlock(d, d.resolvedCwd ?? "."),
+	rawLabel: "Raw shell output",
 };
+
+function shellHighlights(details: ShellEnhancedDetails): string[] {
+	const outputText = snippetFromOutput(details.output, 600);
+	const preview = firstLines(outputText, 6);
+	if (preview.length > 0) return preview;
+	if (details.rawOutput.trim()) return firstLines(details.rawOutput, 6);
+	return ["Command produced no stdout."];
+}
 
 export function renderShellEnhancedCall(
 	params: ShellEnhancedParams,

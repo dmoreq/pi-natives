@@ -57,10 +57,45 @@ const lsEnhancedResultConfig: ResultRenderConfig<LsEnhancedDetails> = {
 			`f${d.totalFiles}/d${d.totalDirectories}`,
 		].filter(Boolean),
 	getIcon: () => ICONS.success,
+	getSummary: d =>
+		`Mapped ${d.relRootFromWorkspace || "."} with ${d.totalFiles} file${d.totalFiles !== 1 ? "s" : ""} and ${d.totalDirectories} director${d.totalDirectories !== 1 ? "ies" : "y"}.`,
+	getHighlights: d => topTopologyEntries(d, 8),
+	getEvidence: d => [
+		`resolved root: ${d.resolvedRoot}`,
+		`scan method: ${d.method}`,
+		`git-aware metadata: ${d.gitAware ? "yes" : "no"}`,
+		`scan time: ${d.scanTime} ms`,
+	],
+	getRaw: d => d.topologyJson,
+	rawLabel: "Raw topology JSON",
 };
 
 function detailsShort(scanMs: number): string {
 	return `${scanMs}ms`;
+}
+
+function topTopologyEntries(details: LsEnhancedDetails, limit: number): string[] {
+	const lines: string[] = [];
+	const visit = (nodes: LsEnhancedDetails["topology"], depth: number): void => {
+		for (const node of nodes) {
+			if (lines.length >= limit) return;
+			const prefix = "  ".repeat(depth);
+			const suffix =
+				node.kind === "directory" ? "/"
+				: node.extension ? ` .${node.extension}`
+				: "";
+			const status = node.gitStatus ? ` [${node.gitStatus}]` : "";
+			lines.push(`${prefix}${node.relPath || node.name}${suffix}${status}`);
+			if (node.children && lines.length < limit) {
+				visit(node.children, depth + 1);
+			}
+		}
+	};
+	visit(details.topology, 0);
+	if (lines.length === 0) {
+		return ["No entries matched the listing filters."];
+	}
+	return lines;
 }
 
 export function renderLsEnhancedCall(

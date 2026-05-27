@@ -8,6 +8,7 @@ import {
 	ICONS,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 
@@ -63,6 +64,12 @@ const astGrepResultConfig: ResultRenderConfig<AstGrepSearchDetails> = {
 		return meta;
 	},
 	getIcon: d => d.matchCount > 0 ? ICONS.success : ICONS.warning,
+	getSummary: d =>
+		`Structural search${d.language ? ` for ${d.language}` : ""} found ${d.matchCount} match${d.matchCount !== 1 ? "es" : ""} after scanning ${d.filesScanned} file${d.filesScanned !== 1 ? "s" : ""}.`,
+	getHighlights: d => firstLines(d.result, 8),
+	getDiagnostics: d => d.warningCount > 0 ? [`${d.warningCount} warning${d.warningCount !== 1 ? "s" : ""}; expand for full warning text.`] : [],
+	getRaw: d => d.result,
+	rawLabel: "Structural matches",
 };
 
 export function renderAstGrepResult(

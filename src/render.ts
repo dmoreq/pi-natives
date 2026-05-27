@@ -11,6 +11,7 @@ import {
 	line,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 
@@ -83,6 +84,12 @@ const grepResultConfig: ResultRenderConfig<GrepToolDetails> = {
 		return meta;
 	},
 	getIcon: d => d.matchCount > 0 ? ICONS.success : ICONS.warning,
+	getSummary: d =>
+		`Searched ${d.filesSearched} file${d.filesSearched !== 1 ? "s" : ""} for "${d.query}" and found ${d.matchCount} match${d.matchCount !== 1 ? "es" : ""} in ${d.fileCount} file${d.fileCount !== 1 ? "s" : ""}.`,
+	getHighlights: d => firstLines(d.result, 8),
+	getDiagnostics: d => d.limitReached ? ["Result limit reached; narrow the query or increase maxCount for more."] : [],
+	getRaw: d => d.result,
+	rawLabel: "Matching lines",
 };
 
 export function renderGrepResult(
@@ -132,13 +139,17 @@ export function renderBm25Result(
 	const lines: string[] = [statusLine(theme, icon, "Concept Search (BM25)", meta.join(", "), details.query)];
 
 	if (details.matches.length > 0) {
-		for (const match of details.matches) {
+		const visibleMatches = options.expanded ? details.matches : details.matches.slice(0, 8);
+		for (const match of visibleMatches) {
 			const scoreStr = match.score.toFixed(3);
 			const label = match.id.length > 60 ? match.id.slice(0, 60) + "\u2026" : match.id;
 			lines.push(`  ${line(theme, "accent", label)} ${line(theme, "dim", `score ${scoreStr}`)}`);
 			if (match.snippet && options.expanded) {
 				lines.push(`    ${line(theme, "muted", match.snippet)}`);
 			}
+		}
+		if (!options.expanded && details.matches.length > visibleMatches.length) {
+			lines.push(line(theme, "dim", "(Ctrl+O to expand snippets and remaining matches)"));
 		}
 	} else {
 		lines.push(`  ${line(theme, "muted", "No matching results found.")}`);

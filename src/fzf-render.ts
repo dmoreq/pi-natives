@@ -8,6 +8,7 @@ import {
 	ICONS,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 
@@ -54,6 +55,12 @@ const fzfResultConfig: ResultRenderConfig<FzfSearchDetails> = {
 		return meta;
 	},
 	getIcon: d => d.matchCount > 0 ? ICONS.success : ICONS.warning,
+	getSummary: d =>
+		`Fuzzy searched ${d.totalFiles} file${d.totalFiles !== 1 ? "s" : ""} for "${d.query}" and found ${d.matchCount} match${d.matchCount !== 1 ? "es" : ""}.`,
+	getHighlights: d => firstLines(d.result, 10),
+	getDiagnostics: d => d.limitReached ? ["Result limit reached; refine the query or increase limit."] : [],
+	getRaw: d => d.result,
+	rawLabel: "Fuzzy file matches",
 };
 
 export function renderFzfResult(

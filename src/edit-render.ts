@@ -63,6 +63,21 @@ const editEnhancedResultConfig: ResultRenderConfig<EditEnhancedDetails> = {
 			d.backupPath ? "backup" : "",
 		].filter(Boolean),
 	getIcon: d => (!d.syntaxValid ? ICONS.warning : ICONS.success),
+	getSummary: d =>
+		`${d.previewDiff ? "Previewed" : "Applied"} ${d.totalChanges} change${d.totalChanges !== 1 ? "s" : ""} in ${d.path}; syntax validation ${d.syntaxValid ? "passed" : "needs attention"}.`,
+	getHighlights: d => [
+		`target: ${d.path}`,
+		`method: ${d.method}`,
+		d.backupPath ? `backup created: ${d.backupPath}` : "backup not created",
+	],
+	getEvidence: d => [
+		`resolved path: ${d.resolvedPath}`,
+		`edit time: ${d.editTime.toFixed(3)} ms`,
+		`syntax valid: ${d.syntaxValid ? "yes" : "no"}`,
+	],
+	getDiagnostics: d => d.warnings ?? [],
+	getRaw: d => formatEditEnhancedBlock(d, d.path),
+	rawLabel: "Edit details and diff",
 };
 
 /**

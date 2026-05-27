@@ -8,6 +8,7 @@ import {
 	ICONS,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 import type { FdFileType } from "./fd";
@@ -63,6 +64,12 @@ const fdResultConfig: ResultRenderConfig<FdFindDetails> = {
 		return meta;
 	},
 	getIcon: d => d.matchCount > 0 ? ICONS.success : ICONS.warning,
+	getSummary: d =>
+		`Found ${d.matchCount} file-system result${d.matchCount !== 1 ? "s" : ""} for ${d.query}.`,
+	getHighlights: d => firstLines(d.result, 10),
+	getDiagnostics: d => d.limitReached ? ["Result limit reached; narrow the pattern or increase maxResults."] : [],
+	getRaw: d => d.result,
+	rawLabel: "File results",
 };
 
 export function renderFdResult(

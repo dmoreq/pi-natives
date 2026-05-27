@@ -82,7 +82,7 @@ export function renderCall(
 
 // ── Generic result renderer builder ─────────────────────────────────
 
-export interface ResultRenderConfig<TDetails extends { result: string }> {
+export interface ResultRenderConfig<TDetails extends { result?: string }> {
 	/** Tool label shown in status line (e.g., "Grep", "Fzf"). */
 	label: string;
 	/** Extract the query/description string from details. */
@@ -95,13 +95,41 @@ export interface ResultRenderConfig<TDetails extends { result: string }> {
 	getTitle?: (details: TDetails) => string;
 	/** Optional: colorize the result body. */
 	colorResult?: (details: TDetails, theme: Theme) => string | undefined;
+	/** Human-readable outcome shown before raw evidence. */
+	getSummary?: (details: TDetails) => string;
+	/** Short, high-signal findings shown in collapsed view. */
+	getHighlights?: (details: TDetails) => string[];
+	/** Supporting details shown before raw output in expanded view. */
+	getEvidence?: (details: TDetails) => string[];
+	/** Warnings, fallbacks, truncation, or caveats. */
+	getDiagnostics?: (details: TDetails) => string[];
+	/** Raw or machine-oriented payload shown only in expanded view. Defaults to details.result. */
+	getRaw?: (details: TDetails) => string | undefined;
+	/** Label for the expanded raw payload section. */
+	rawLabel?: string;
 }
 
 /**
  * Build a standard renderResult function for a tool.
  * Handles the common pattern of: fallback text → error display → status line + results.
  */
-export function renderResult<TDetails extends { result: string }>(
+function pushSection(lines: string[], title: string, entries: string[] | undefined, theme: Theme): void {
+	const clean = (entries ?? []).filter(Boolean);
+	if (clean.length === 0) return;
+	lines.push("");
+	lines.push(line(theme, "muted", title));
+	for (const entry of clean) {
+		lines.push(`  ${entry}`);
+	}
+}
+
+function firstLines(text: string | undefined, maxLines: number): string[] {
+	if (!text) return [];
+	const lines = text.split("\n").filter(l => l.trim().length > 0);
+	return lines.slice(0, maxLines);
+}
+
+export function renderResult<TDetails extends { result?: string }>(
 	result: AgentToolResult<TDetails>,
 	options: ToolRenderResultOptions,
 	theme: Theme,
@@ -116,9 +144,10 @@ export function renderResult<TDetails extends { result: string }>(
 
 	// Error state
 	if (result.isError) {
+		const errorText = details.result || fallbackText(result, `${config.label} failed`);
 		const text = [
 			statusLine(theme, ICONS.error, config.label, undefined, config.getQuery(details)),
-			`\n${details.result}`,
+			`\n${line(theme, "error", errorText)}`,
 		].join("");
 		return new Text(text, 0, 0);
 	}
@@ -127,12 +156,45 @@ export function renderResult<TDetails extends { result: string }>(
 	const meta = config.getMeta(details).filter(Boolean).join(", ");
 	const icon = config.getIcon(details);
 	const title = config.getTitle ? config.getTitle(details) : config.label;
-	const coloredBody = config.colorResult ? config.colorResult(details, theme) : details.result;
+	const summary = config.getSummary?.(details);
+	const highlights = config.getHighlights?.(details);
+	const diagnostics = config.getDiagnostics?.(details);
+	const evidence = config.getEvidence?.(details);
+	const raw = config.getRaw ? config.getRaw(details) : details.result;
+	const coloredRaw = raw && config.colorResult ? config.colorResult(details, theme) : raw;
+
+	const lines = [statusLine(theme, icon, title, meta || undefined, config.getQuery(details))];
+
+	if (summary) {
+		lines.push(summary);
+	}
+
+	if (config.getSummary || config.getHighlights || config.getEvidence || config.getDiagnostics || config.getRaw) {
+		pushSection(lines, "Highlights", highlights, theme);
+		if (options.expanded) {
+			pushSection(lines, "Evidence", evidence, theme);
+			pushSection(lines, "Diagnostics", diagnostics, theme);
+			if (raw) {
+				lines.push("");
+				lines.push(line(theme, "muted", config.rawLabel ?? "Raw output"));
+				lines.push(coloredRaw ?? raw);
+			}
+		} else {
+			const collapsedDiagnostics = diagnostics?.slice(0, 2);
+			pushSection(lines, "Diagnostics", collapsedDiagnostics, theme);
+			if (raw && raw.trim().length > 0) {
+				lines.push(line(theme, "dim", "(Ctrl+O to expand raw output and full evidence)"));
+			}
+		}
+		return new Text(lines.join("\n"), 0, 0);
+	}
 
 	const text = [
 		statusLine(theme, icon, title, meta || undefined, config.getQuery(details)),
-		details.result ? `\n${coloredBody ?? details.result}` : "",
+		details.result ? `\n${coloredRaw ?? details.result}` : "",
 	].join("");
 
 	return new Text(text, 0, 0);
 }
+
+export { firstLines };

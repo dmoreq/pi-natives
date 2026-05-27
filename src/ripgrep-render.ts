@@ -8,6 +8,7 @@ import {
 	ICONS,
 	statusLine,
 	renderResult,
+	firstLines,
 	type ResultRenderConfig,
 } from "./render-shared";
 import type { GrepOutputMode } from "./ripgrep";
@@ -79,6 +80,12 @@ const ripgrepResultConfig: ResultRenderConfig<RipgrepSearchDetails> = {
 		const modeLabel = d.mode !== "content" ? ` (${d.mode})` : "";
 		return `Ripgrep${modeLabel}`;
 	},
+	getSummary: d =>
+		`Searched ${d.filesSearched} file${d.filesSearched !== 1 ? "s" : ""} for "${d.pattern}" and found ${d.matchCount} match${d.matchCount !== 1 ? "es" : ""} in ${d.fileCount} file${d.fileCount !== 1 ? "s" : ""}.`,
+	getHighlights: d => firstLines(d.result, 8),
+	getDiagnostics: d => d.limitReached ? ["Result limit reached; narrow the query or increase maxCount."] : [],
+	getRaw: d => d.result,
+	rawLabel: "Ripgrep output",
 };
 
 export function renderRipgrepResult(
